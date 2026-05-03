@@ -95,6 +95,7 @@ namespace Ladestander.Api
             builder.Services.AddScoped<IChargingSessionService, ChargingSessionService>();
             builder.Services.AddScoped<IInvoiceService, InvoiceService>();
             builder.Services.AddScoped<IInvoiceCalculationService, InvoiceCalculationService>();
+            builder.Services.AddScoped<IChargingSessionCsvImportService, ChargingSessionCsvImportService>();
 
             builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
             builder.Services.AddScoped<IBillingPeriodRepository, BillingPeriodRepository>();

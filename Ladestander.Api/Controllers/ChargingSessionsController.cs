@@ -12,10 +12,14 @@ namespace Ladestander.Api.Controllers;
 public class ChargingSessionsController : ControllerBase
 {
     private readonly IChargingSessionService _chargingSessionService;
+    private readonly IChargingSessionCsvImportService _csvImportService;
 
-    public ChargingSessionsController(IChargingSessionService chargingSessionService)
+    public ChargingSessionsController(
+    IChargingSessionService chargingSessionService,
+    IChargingSessionCsvImportService csvImportService)
     {
         _chargingSessionService = chargingSessionService;
+        _csvImportService = csvImportService;
     }
 
     [HttpGet]
@@ -107,5 +111,25 @@ public class ChargingSessionsController : ControllerBase
             new { chargingSessionId = created.ChargingSessionId },
             created
         );
+    }
+
+    [HttpPost("import-csv/preview")]
+    [ProducesResponseType(typeof(List<ChargingSessionCsvRowDto>), 200)]
+    [ProducesResponseType(typeof(ErrorResponse), 400)]
+    public async Task<IActionResult> PreviewCsv(IFormFile file)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return BadRequest(new ErrorResponse
+            {
+                StatusCode = 400,
+                Message = "CSV file is required.",
+                Timestamp = DateTime.UtcNow
+            });
+        }
+
+        var rows = await _csvImportService.ParseAsync(file);
+
+        return Ok(rows);
     }
 }
