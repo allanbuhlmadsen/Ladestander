@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="HashGenerator/HashGenerator.csproj" Id="58efc6ad-6e48-4c26-9358-0bd9f8a4f958" />
+  <Project Path="Ladestander.Api/Ladestander.Api.csproj" />
+</Solution>
