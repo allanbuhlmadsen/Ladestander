@@ -56,5 +56,31 @@ namespace Ladestander.Api.Repositories
 
             return customer;
         }
+
+        public async Task<Customer?> GetByFullNameAsync(string fullName)
+        {
+            var normalizedInput = Normalize(fullName);
+
+            var customers = await _context.Customers.ToListAsync();
+
+            return customers.FirstOrDefault(c =>
+                Normalize(
+                    string.IsNullOrWhiteSpace(c.MiddleName)
+                        ? c.FirstName + " " + c.LastName
+                        : c.FirstName + " " + c.MiddleName + " " + c.LastName
+                ) == normalizedInput
+                ||
+                Normalize(c.FirstName + " " + c.LastName) == normalizedInput
+            );
+        }
+
+        private static string Normalize(string value)
+        {
+            return string.Join(" ",
+                value
+                    .Trim()
+                    .ToLower()
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        }
     }
 }

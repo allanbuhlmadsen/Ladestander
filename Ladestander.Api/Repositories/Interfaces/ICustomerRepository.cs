@@ -10,5 +10,6 @@ namespace Ladestander.Api.Repositories.Interfaces
         Task<bool> ExistsByRfidNumberAsync(string rfidNumber);
         Task<Customer> UpdateAsync(Customer customer);
         Task<Customer> SoftDeleteAsync(Customer customer);
+        Task<Customer?> GetByFullNameAsync(string fullName);
     }
 }

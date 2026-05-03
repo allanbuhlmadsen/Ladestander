@@ -132,4 +132,34 @@ public class ChargingSessionsController : ControllerBase
 
         return Ok(rows);
     }
+
+    [HttpPost("import-csv")]
+    [ProducesResponseType(typeof(ChargingSessionCsvImportResultDto), 200)]
+    [ProducesResponseType(typeof(ErrorResponse), 400)]
+    public async Task<IActionResult> ImportCsv(IFormFile file, [FromForm] int billingPeriodId)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return BadRequest(new ErrorResponse
+            {
+                StatusCode = 400,
+                Message = "CSV file is required.",
+                Timestamp = DateTime.UtcNow
+            });
+        }
+
+        if (billingPeriodId <= 0)
+        {
+            return BadRequest(new ErrorResponse
+            {
+                StatusCode = 400,
+                Message = "BillingPeriodId must be greater than 0.",
+                Timestamp = DateTime.UtcNow
+            });
+        }
+
+        var result = await _csvImportService.ImportAsync(file, billingPeriodId);
+
+        return Ok(result);
+    }
 }
