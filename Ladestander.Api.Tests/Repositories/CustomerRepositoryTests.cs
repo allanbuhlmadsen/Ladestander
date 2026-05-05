@@ -1,33 +1,16 @@
-﻿using Ladestander.Api.Data;
-using Ladestander.Api.Repositories;
-using Microsoft.Data.Sqlite;
+﻿using Ladestander.Api.Repositories;
+using Ladestander.Api.Tests.TestHelpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace Ladestander.Api.Tests.Repositories;
 
 public class CustomerRepositoryTests
 {
-    private static AppDbContext CreateContext()
-    {
-        var connection = new SqliteConnection("DataSource=:memory:");
-        connection.Open();
-
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseSqlite(connection)
-            .Options;
-
-        var context = new AppDbContext(options);
-
-        context.Database.EnsureCreated();
-
-        return context;
-    }
-
     [Fact]
     public async Task GetByFullNameAsync_ReturnsCustomer_WhenFullNameIncludesMiddleName()
     {
         // Arrange
-        using var context = CreateContext();
+        using var context = SqliteTestDbContextFactory.CreateContext();
 
         context.Customers.Add(new Ladestander.Api.Entities.Customer
         {
@@ -57,7 +40,7 @@ public class CustomerRepositoryTests
     public async Task GetByFullNameAsync_ReturnsCustomer_WhenUsingFallbackWithoutMiddleName()
     {
         // Arrange
-        using var context = CreateContext();
+        using var context = SqliteTestDbContextFactory.CreateContext();
 
         context.Customers.Add(new Ladestander.Api.Entities.Customer
         {
@@ -87,7 +70,7 @@ public class CustomerRepositoryTests
     public async Task GetByFullNameAsync_ReturnsCustomer_WhenNameUsesDifferentCasing()
     {
         // Arrange
-        using var context = CreateContext();
+        using var context = SqliteTestDbContextFactory.CreateContext();
 
         context.Customers.Add(new Ladestander.Api.Entities.Customer
         {
@@ -117,7 +100,7 @@ public class CustomerRepositoryTests
     public async Task GetByFullNameAsync_ReturnsCustomer_WhenNameContainsExtraSpaces()
     {
         // Arrange
-        using var context = CreateContext();
+        using var context = SqliteTestDbContextFactory.CreateContext();
 
         context.Customers.Add(new Ladestander.Api.Entities.Customer
         {
@@ -147,7 +130,7 @@ public class CustomerRepositoryTests
     public async Task ExistsByRfidNumberAsync_ReturnsTrue_WhenRfidNumberExists()
     {
         // Arrange
-        using var context = CreateContext();
+        using var context = SqliteTestDbContextFactory.CreateContext();
 
         context.Customers.Add(new Ladestander.Api.Entities.Customer
         {
@@ -173,7 +156,7 @@ public class CustomerRepositoryTests
     public async Task ExistsByRfidNumberAsync_ReturnsFalse_WhenRfidNumberDoesNotExist()
     {
         // Arrange
-        using var context = CreateContext();
+        using var context = SqliteTestDbContextFactory.CreateContext();
 
         var repository = new CustomerRepository(context);
 
