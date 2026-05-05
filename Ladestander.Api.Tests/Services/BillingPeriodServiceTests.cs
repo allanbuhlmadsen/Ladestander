@@ -5,7 +5,7 @@ using Ladestander.Api.Services;
 using Moq;
 using Xunit;
 
-namespace Ladestander.Api.Tests;
+namespace Ladestander.Api.Tests.Services;
 
 public class BillingPeriodServiceTests
 {
@@ -156,6 +156,8 @@ public class BillingPeriodServiceTests
             repo => repo.UpdateAsync(It.Is<BillingPeriod>(bp => bp.IsClosed == false)),
             Times.Once);
     }
+
+
 
     private static UpdateBillingPeriodRequestDto CreateValidUpdateRequest()
     {

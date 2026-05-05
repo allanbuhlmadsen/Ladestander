@@ -6,7 +6,7 @@ using Ladestander.Api.Services.Interfaces;
 using Moq;
 using Xunit;
 
-namespace Ladestander.Api.Tests;
+namespace Ladestander.Api.Tests.Services;
 
 public class InvoiceServiceTests
 {

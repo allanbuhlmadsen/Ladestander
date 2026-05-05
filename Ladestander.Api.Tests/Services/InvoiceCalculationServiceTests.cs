@@ -1,7 +1,7 @@
 ﻿using Ladestander.Api.Services;
 using Xunit;
 
-namespace Ladestander.Api.Tests;
+namespace Ladestander.Api.Tests.Services;
 
 public class InvoiceCalculationServiceTests
 {
