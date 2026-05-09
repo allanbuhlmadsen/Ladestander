@@ -1,0 +1,87 @@
+﻿@page "/customers"
+
+@using System.Net.Http.Json
+@using Ladestander.Web.DTOs
+@using System.Net.Http.Headers
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject IHttpClientFactory HttpClientFactory
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<h3>Customers</h3>
+
+@if (!string.IsNullOrWhiteSpace(_errorMessage))
+{
+    <p class="text-danger">@_errorMessage</p>
+}
+else if (_customers is null)
+{
+    <p>Loading...</p>
+}
+else if (!_customers.Any())
+{
+    <p>No customers found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Full name</th>
+                <th>Email</th>
+                <th>Active</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var customer in _customers)
+            {
+                <tr>
+                    <td>@customer.CustomerId</td>
+                    <td>@customer.FullName</td>
+                    <td>@customer.Email</td>
+                    <td>@customer.IsActive</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+
+    private List<CustomerResponseDto>? _customers;
+    private string? _errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var user = authState.User;
+
+        if (user.Identity is null || !user.Identity.IsAuthenticated)
+        {
+            _errorMessage = "You must log in to view customers.";
+            _customers = new List<CustomerResponseDto>();
+            return;
+        }
+
+        var token = user.FindFirst("access_token")?.Value;
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            _errorMessage = "Access token was not found.";
+            _customers = new List<CustomerResponseDto>();
+            return;
+        }
+
+        var client = HttpClientFactory.CreateClient("LadestanderApi");
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        _customers = await client.GetFromJsonAsync<List<CustomerResponseDto>>(
+            "api/customers");
+    }
+}

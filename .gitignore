@@ -361,3 +361,23 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Build folders
+bin/
+obj/
+
+# Visual Studio
+.vs/
+
+# Rider / JetBrains
+.idea/
+
+# Coverage reports
+CoverageReport/
+
+# User-specific files
+*.user
+*.suo
+
+# Logs
+*.log

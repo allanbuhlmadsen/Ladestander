@@ -1,4 +1,4 @@
-﻿namespace Ladestander.Api.DTOs.Customers;
+﻿namespace Ladestander.Web.DTOs;
 
 public record CustomerResponseDto(
     int CustomerId,
