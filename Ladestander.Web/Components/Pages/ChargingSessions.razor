@@ -1,0 +1,477 @@
+﻿@page "/charging-sessions"
+
+@using System.Net.Http.Json
+@using Ladestander.Web.DTOs
+@using System.Net.Http.Headers
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject IHttpClientFactory HttpClientFactory
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<h3>Charging Sessions</h3>
+
+<hr />
+
+<h4>Create Test Charging Session</h4>
+
+<div class="mb-3">
+    <label>Customer</label>
+
+    <select class="form-select" @bind="_importCustomerId">
+        <option value="0">Select customer</option>
+
+        @if (_customers is not null)
+        {
+            @foreach (var customer in _customers)
+            {
+                <option value="@customer.CustomerId">
+                    @customer.CustomerId - @customer.FullName
+                </option>
+            }
+        }
+    </select>
+</div>
+
+<div class="mb-3">
+    <label>Billing Period</label>
+
+    <select class="form-select" @bind="_importBillingPeriodId">
+        <option value="0">Select billing period</option>
+
+        @if (_billingPeriods is not null)
+        {
+            @foreach (var billingPeriod in _billingPeriods)
+            {
+                <option value="@billingPeriod.BillingPeriodId">
+                    @billingPeriod.BillingPeriodId - @billingPeriod.Name
+                </option>
+            }
+        }
+    </select>
+</div>
+
+<div class="mb-3">
+    <label>Energy kWh</label>
+    <input class="form-control" type="number" step="0.001" @bind="_importEnergyKWh" />
+</div>
+
+<button class="btn btn-primary" @onclick="ImportChargingSessionAsync">
+    Create Test Charging Session
+</button>
+
+@if (!string.IsNullOrWhiteSpace(_importMessage))
+{
+    <p class="mt-2">@_importMessage</p>
+}
+
+<hr />
+
+<h4>Import CSV</h4>
+
+<div class="mb-3">
+    <label>Billing Period</label>
+
+    <select class="form-select" @bind="_csvBillingPeriodId">
+        <option value="0">Select billing period</option>
+
+        @if (_billingPeriods is not null)
+        {
+            @foreach (var billingPeriod in _billingPeriods)
+            {
+                <option value="@billingPeriod.BillingPeriodId">
+                    @billingPeriod.BillingPeriodId - @billingPeriod.Name
+                </option>
+            }
+        }
+    </select>
+</div>
+
+<div class="mb-3">
+    <label>CSV file</label>
+    <InputFile OnChange="OnCsvFileSelected" />
+</div>
+
+<button class="btn btn-primary" @onclick="ImportCsvAsync">
+    Import CSV
+</button>
+
+@if (!string.IsNullOrWhiteSpace(_csvImportMessage))
+{
+    <p class="mt-2">@_csvImportMessage</p>
+}
+
+<hr />
+
+<h4>Filter Charging Sessions</h4>
+
+<div class="mb-3">
+    <label>Customer</label>
+
+    <select class="form-select" @bind="_filterCustomerId">
+        <option value="0">Select customer</option>
+
+        @if (_customers is not null)
+        {
+            @foreach (var customer in _customers)
+            {
+                <option value="@customer.CustomerId">
+                    @customer.CustomerId - @customer.FullName
+                </option>
+            }
+        }
+    </select>
+</div>
+
+<div class="mb-3">
+    <label>Billing Period</label>
+
+    <select class="form-select" @bind="_filterBillingPeriodId">
+        <option value="0">Select billing period</option>
+
+        @if (_billingPeriods is not null)
+        {
+            @foreach (var billingPeriod in _billingPeriods)
+            {
+                <option value="@billingPeriod.BillingPeriodId">
+                    @billingPeriod.BillingPeriodId - @billingPeriod.Name
+                </option>
+            }
+        }
+    </select>
+</div>
+
+<button class="btn btn-secondary" @onclick="FilterChargingSessionsAsync">
+    Filter
+</button>
+
+<button class="btn btn-outline-secondary ms-2" @onclick="LoadAllChargingSessionsAsync">
+    Show All
+</button>
+
+@if (!string.IsNullOrWhiteSpace(_filterMessage))
+{
+    <p class="mt-2">@_filterMessage</p>
+}
+
+<hr />
+
+@if (!string.IsNullOrWhiteSpace(_errorMessage))
+{
+    <p class="text-danger">@_errorMessage</p>
+}
+else if (_chargingSessions is null)
+{
+    <p>Loading...</p>
+}
+else if (!_chargingSessions.Any())
+{
+    <p>No charging sessions found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Customer</th>
+                <th>Billing period</th>
+                <th>Invoice</th>
+                <th>Charger</th>
+                <th>Start time</th>
+                <th>Energy kWh</th>
+                <th>Source user</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var session in _chargingSessions)
+            {
+                <tr>
+                    <td>@session.ChargingSessionId</td>
+                    <td>@session.CustomerId</td>
+                    <td>@session.BillingPeriodId</td>
+                    <td>@session.InvoiceId</td>
+                    <td>@session.ChargerAlias</td>
+                    <td>@session.StartTime</td>
+                    <td>@session.EnergyKWh</td>
+                    <td>@session.SourceUserName</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private int _importCustomerId;
+    private int _importBillingPeriodId;
+    private decimal _importEnergyKWh;
+    private string? _importMessage;
+    private int _csvBillingPeriodId;
+    private IBrowserFile? _csvFile;
+    private string? _csvImportMessage;
+
+    private int _filterCustomerId;
+    private int _filterBillingPeriodId;
+    private string? _filterMessage;
+
+    private List<ChargingSessionResponseDto>? _chargingSessions;
+    private List<CustomerResponseDto>? _customers;
+    private List<BillingPeriodResponseDto>? _billingPeriods;
+
+    private string? _errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var user = authState.User;
+
+        if (user.Identity is null || !user.Identity.IsAuthenticated)
+        {
+            _errorMessage = "You must log in to view charging sessions.";
+            _chargingSessions = new List<ChargingSessionResponseDto>();
+            return;
+        }
+
+        var token = user.FindFirst("access_token")?.Value;
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            _errorMessage = "Access token was not found.";
+            _chargingSessions = new List<ChargingSessionResponseDto>();
+            return;
+        }
+
+        var client = HttpClientFactory.CreateClient("LadestanderApi");
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        await LoadCustomersAsync();
+        await LoadBillingPeriodsAsync();
+        await LoadAllChargingSessionsAsync();
+    }
+
+    private async Task ImportChargingSessionAsync()
+    {
+        _importMessage = null;
+
+        var request = new ChargingSessionImportRequestDto(
+            _importCustomerId,
+            _importBillingPeriodId,
+            "Test charger",
+            DateTime.UtcNow,
+            _importEnergyKWh,
+            "Frontend Test"
+        );
+
+        var authState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var token = authState.User.FindFirst("access_token")?.Value;
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            _importMessage = "Access token was not found.";
+            return;
+        }
+
+        var client = HttpClientFactory.CreateClient("LadestanderApi");
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await client.PostAsJsonAsync(
+            "api/charging-sessions/import",
+            request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _importMessage = "Test charging session could not be created.";
+            return;
+        }
+
+        _importMessage = "Test charging session created.";
+
+        _chargingSessions =
+            await client.GetFromJsonAsync<List<ChargingSessionResponseDto>>(
+                "api/charging-sessions");
+    }
+
+    private void OnCsvFileSelected(InputFileChangeEventArgs e)
+    {
+        _csvFile = e.File;
+    }
+
+    private async Task ImportCsvAsync()
+    {
+        _csvImportMessage = null;
+
+        if (_csvFile is null)
+        {
+            _csvImportMessage = "Please select a CSV file.";
+            return;
+        }
+
+        var authState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var token = authState.User.FindFirst("access_token")?.Value;
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            _csvImportMessage = "Access token was not found.";
+            return;
+        }
+
+        var client = HttpClientFactory.CreateClient("LadestanderApi");
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        using var content = new MultipartFormDataContent();
+
+        using var stream = _csvFile.OpenReadStream(maxAllowedSize: 10_000_000);
+
+        var fileContent = new StreamContent(stream);
+
+        fileContent.Headers.ContentType =
+            new System.Net.Http.Headers.MediaTypeHeaderValue("text/csv");
+
+        content.Add(fileContent, "file", _csvFile.Name);
+
+        content.Add(
+            new StringContent(_csvBillingPeriodId.ToString()),
+            "billingPeriodId");
+
+        var response = await client.PostAsync(
+            "api/charging-sessions/import-csv",
+            content);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _csvImportMessage = "CSV import failed.";
+            return;
+        }
+
+        _csvImportMessage = "CSV imported successfully.";
+
+        _chargingSessions =
+            await client.GetFromJsonAsync<List<ChargingSessionResponseDto>>(
+                "api/charging-sessions");
+    }
+
+    private async Task LoadAllChargingSessionsAsync()
+    {
+        var authState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var token = authState.User.FindFirst("access_token")?.Value;
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            _filterMessage = "Access token was not found.";
+            return;
+        }
+
+        var client = HttpClientFactory.CreateClient("LadestanderApi");
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        _chargingSessions =
+            await client.GetFromJsonAsync<List<ChargingSessionResponseDto>>(
+                "api/charging-sessions");
+
+        _filterMessage = null;
+    }
+
+    private async Task FilterChargingSessionsAsync()
+    {
+        _filterMessage = null;
+
+        var authState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var token = authState.User.FindFirst("access_token")?.Value;
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            _filterMessage = "Access token was not found.";
+            return;
+        }
+
+        var client = HttpClientFactory.CreateClient("LadestanderApi");
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        var allChargingSessions =
+            await client.GetFromJsonAsync<List<ChargingSessionResponseDto>>(
+                "api/charging-sessions");
+
+        if (allChargingSessions is null)
+        {
+            _chargingSessions = new List<ChargingSessionResponseDto>();
+            _filterMessage = "No charging sessions found.";
+            return;
+        }
+
+        _chargingSessions = allChargingSessions
+            .Where(session =>
+                (_filterCustomerId == 0 || session.CustomerId == _filterCustomerId)
+                &&
+                (_filterBillingPeriodId == 0 || session.BillingPeriodId == _filterBillingPeriodId))
+            .ToList();
+
+        _filterMessage = "Filter applied.";
+    }
+
+    private async Task LoadCustomersAsync()
+    {
+        var authState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var token = authState.User.FindFirst("access_token")?.Value;
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            _errorMessage = "Access token was not found.";
+            return;
+        }
+
+        var client = HttpClientFactory.CreateClient("LadestanderApi");
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        _customers =
+            await client.GetFromJsonAsync<List<CustomerResponseDto>>(
+                "api/customers");
+    }
+
+    private async Task LoadBillingPeriodsAsync()
+    {
+        var authState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var token = authState.User.FindFirst("access_token")?.Value;
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            _errorMessage = "Access token was not found.";
+            return;
+        }
+
+        var client = HttpClientFactory.CreateClient("LadestanderApi");
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        _billingPeriods =
+            await client.GetFromJsonAsync<List<BillingPeriodResponseDto>>(
+                "api/billing-periods");
+    }
+}

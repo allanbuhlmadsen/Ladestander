@@ -2,6 +2,7 @@
 using Ladestander.Api.Entities;
 using Ladestander.Api.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 
 namespace Ladestander.Api.Repositories
 {
@@ -59,7 +60,7 @@ namespace Ladestander.Api.Repositories
 
         public async Task<Customer?> GetByFullNameAsync(string fullName)
         {
-            var normalizedInput = Normalize(fullName);
+            var normalizedInput = Normalize(RemoveTrailingNumber(fullName));
 
             var customers = await _context.Customers.ToListAsync();
 
@@ -81,6 +82,11 @@ namespace Ladestander.Api.Repositories
                     .Trim()
                     .ToLower()
                     .Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        }
+
+        private static string RemoveTrailingNumber(string value)
+        {
+            return Regex.Replace(value, @"\s+\d+$", "");
         }
     }
 }

@@ -21,6 +21,9 @@ namespace Ladestander.Api.Services
             return customers.Select(c => new CustomerResponseDto(
                 c.CustomerId,
                 c.RfidNumber,
+                c.FirstName,
+                c.MiddleName,
+                c.LastName,
                 c.FullName,
                 c.Email,
                 c.Street,
@@ -43,6 +46,9 @@ namespace Ladestander.Api.Services
             return new CustomerResponseDto(
                 customer.CustomerId,
                 customer.RfidNumber,
+                customer.FirstName,
+                customer.MiddleName,
+                customer.LastName,
                 customer.FullName,
                 customer.Email,
                 customer.Street,
@@ -82,6 +88,9 @@ namespace Ladestander.Api.Services
             return new CustomerResponseDto(
                 created.CustomerId,
                 created.RfidNumber,
+                created.FirstName,
+                created.MiddleName,
+                created.LastName,
                 created.FullName,
                 created.Email,
                 created.Street,
@@ -118,6 +127,9 @@ namespace Ladestander.Api.Services
             return new CustomerResponseDto(
                 updated.CustomerId,
                 updated.RfidNumber,
+                updated.FirstName,
+                updated.MiddleName,
+                updated.LastName,
                 updated.FullName,
                 updated.Email,
                 updated.Street,
@@ -142,6 +154,9 @@ namespace Ladestander.Api.Services
             return new CustomerResponseDto(
                 deleted.CustomerId,
                 deleted.RfidNumber,
+                deleted.FirstName,
+                deleted.MiddleName,
+                deleted.LastName,
                 deleted.FullName,
                 deleted.Email,
                 deleted.Street,

@@ -51,12 +51,12 @@ public class ChargingSessionCsvImportService : IChargingSessionCsvImportService
             }
 
             var row = new ChargingSessionCsvRowDto(
-                SessionId: columns[0].Trim('"'),
-                ChargerAlias: columns[1].Trim('"'),
-                StartTime: DateTime.ParseExact(columns[3].Trim('"'), "dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture),
-                EndTime: DateTime.ParseExact(columns[4].Trim('"'), "dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture),
-                EnergyKWh: decimal.Parse(columns[6].Trim('"'), CultureInfo.InvariantCulture),
-                UserName: columns[9].Trim('"')
+                SessionId: columns[0].Trim().Trim('"'),
+                ChargerAlias: columns[1].Trim().Trim('"'),
+                StartTime: DateTime.ParseExact(columns[3].Trim().Trim('"'), "dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture),
+                EndTime: DateTime.ParseExact(columns[4].Trim().Trim('"'), "dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture),
+                EnergyKWh: decimal.Parse(columns[8].Trim().Trim('"'), CultureInfo.InvariantCulture),
+                UserName: columns[11].Trim().Trim('"')
             );
 
             rows.Add(row);

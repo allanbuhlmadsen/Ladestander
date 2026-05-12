@@ -1,0 +1,432 @@
+﻿@page "/invoices"
+
+@using System.Net.Http.Json
+@using Ladestander.Web.DTOs
+@using System.Net.Http.Headers
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject IHttpClientFactory HttpClientFactory
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<h3>Invoices</h3>
+
+<hr />
+
+<h4>Generate Invoice</h4>
+
+<div class="mb-3">
+    <label>Customer</label>
+
+    <select class="form-select" @bind="_generateCustomerId">
+
+        <option value="0">Select customer</option>
+
+        @if (_customers is not null)
+        {
+            @foreach (var customer in _customers)
+            {
+                <option value="@customer.CustomerId">
+                    @customer.CustomerId - @customer.FullName
+                </option>
+            }
+        }
+
+    </select>
+</div>
+
+<div class="mb-3">
+    <label>Billing Period</label>
+
+    <select class="form-select" @bind="_generateBillingPeriodId">
+
+        <option value="0">Select billing period</option>
+
+        @if (_billingPeriods is not null)
+        {
+            @foreach (var billingPeriod in _billingPeriods)
+            {
+                <option value="@billingPeriod.BillingPeriodId">
+                    @billingPeriod.BillingPeriodId - @billingPeriod.Name
+                </option>
+            }
+        }
+
+    </select>
+</div>
+
+<button class="btn btn-primary" @onclick="GenerateInvoiceAsync">
+    Generate Invoice
+</button>
+
+@if (!string.IsNullOrWhiteSpace(_generateMessage))
+{
+    <p class="mt-2">@_generateMessage</p>
+}
+
+@if (!string.IsNullOrWhiteSpace(_statusMessage))
+{
+    <p class="mt-2">@_statusMessage</p>
+}
+
+<hr />
+
+<h4>Filter Invoices</h4>
+
+<div class="mb-3">
+    <label>Customer</label>
+
+    <select class="form-select" @bind="_filterCustomerId">
+
+        <option value="0">Select customer</option>
+
+        @if (_customers is not null)
+        {
+            @foreach (var customer in _customers)
+            {
+                <option value="@customer.CustomerId">
+                    @customer.CustomerId - @customer.FullName
+                </option>
+            }
+        }
+
+    </select>
+</div>
+
+<div class="mb-3">
+    <label>Billing Period</label>
+
+    <select class="form-select" @bind="_filterBillingPeriodId">
+
+        <option value="0">Select billing period</option>
+
+        @if (_billingPeriods is not null)
+        {
+            @foreach (var billingPeriod in _billingPeriods)
+            {
+                <option value="@billingPeriod.BillingPeriodId">
+                    @billingPeriod.BillingPeriodId - @billingPeriod.Name
+                </option>
+            }
+        }
+
+    </select>
+</div>
+
+<button class="btn btn-secondary" @onclick="FilterInvoicesAsync">
+    Filter
+</button>
+
+<button class="btn btn-outline-secondary ms-2" @onclick="LoadAllInvoicesAsync">
+    Show All
+</button>
+
+@if (!string.IsNullOrWhiteSpace(_filterMessage))
+{
+    <p class="mt-2">@_filterMessage</p>
+}
+
+<hr />
+
+@if (!string.IsNullOrWhiteSpace(_errorMessage))
+{
+    <p class="text-danger">@_errorMessage</p>
+}
+else if (_invoices is null)
+{
+    <p>Loading...</p>
+}
+else if (!_invoices.Any())
+{
+    <p>No invoices found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Customer</th>
+                <th>Billing period</th>
+                <th>Status</th>
+                <th>Sent</th>
+                <th>Paid</th>
+                <th>Total kWh</th>
+                <th>Total amount</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var invoice in _invoices)
+            {
+                <tr>
+                    <td>@invoice.InvoiceId</td>
+                    <td>@invoice.CustomerId</td>
+                    <td>@invoice.BillingPeriodId</td>
+                    <td>@invoice.Status</td>
+                    <td>@invoice.IsSent</td>
+                    <td>@invoice.IsPaid</td>
+                    <td>@invoice.TotalEnergyKWh</td>
+                    <td>@invoice.TotalAmount</td>
+                    <td>@invoice.CreatedAt</td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" @onclick='() => UpdateInvoiceStatusAsync(invoice.InvoiceId, "Sent")'>
+                            Mark Sent
+                        </button>
+
+                        <button class="btn btn-sm btn-success ms-2" @onclick='() => UpdateInvoiceStatusAsync(invoice.InvoiceId, "Paid")'>
+                            Mark Paid
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private int _generateCustomerId;
+    private int _generateBillingPeriodId;
+    private string? _generateMessage;
+    private string? _statusMessage;
+
+    private int _filterCustomerId;
+    private int _filterBillingPeriodId;
+    private string? _filterMessage;
+
+    private List<InvoiceResponseDto>? _invoices;
+    private List<CustomerResponseDto>? _customers;
+    private List<BillingPeriodResponseDto>? _billingPeriods;
+
+    private string? _errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var user = authState.User;
+
+        if (user.Identity is null || !user.Identity.IsAuthenticated)
+        {
+            _errorMessage = "You must log in to view invoices.";
+            _invoices = new List<InvoiceResponseDto>();
+            return;
+        }
+
+        var token = user.FindFirst("access_token")?.Value;
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            _errorMessage = "Access token was not found.";
+            _invoices = new List<InvoiceResponseDto>();
+            return;
+        }
+
+        var client = HttpClientFactory.CreateClient("LadestanderApi");
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        await LoadCustomersAsync();
+        await LoadBillingPeriodsAsync();
+        await LoadAllInvoicesAsync();
+    }
+
+    private async Task GenerateInvoiceAsync()
+    {
+        _generateMessage = null;
+
+        var request = new GenerateInvoiceRequestDto(
+            _generateCustomerId,
+            _generateBillingPeriodId
+        );
+
+        var authState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var token = authState.User.FindFirst("access_token")?.Value;
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            _generateMessage = "Access token was not found.";
+            return;
+        }
+
+        var client = HttpClientFactory.CreateClient("LadestanderApi");
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await client.PostAsJsonAsync(
+            "api/invoices/generate",
+            request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _generateMessage = "Invoice could not be generated.";
+            return;
+        }
+
+        _generateMessage = "Invoice generated.";
+
+        _invoices = await client.GetFromJsonAsync<List<InvoiceResponseDto>>(
+            "api/invoices");
+    }
+
+    private async Task UpdateInvoiceStatusAsync(int invoiceId, string status)
+    {
+        _statusMessage = null;
+
+        var request = new UpdateInvoiceStatusRequestDto(status);
+
+        var authState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var token = authState.User.FindFirst("access_token")?.Value;
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            _statusMessage = "Access token was not found.";
+            return;
+        }
+
+        var client = HttpClientFactory.CreateClient("LadestanderApi");
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await client.PatchAsJsonAsync(
+            $"api/invoices/{invoiceId}/status",
+            request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _statusMessage = "Invoice status could not be updated.";
+            return;
+        }
+
+        _statusMessage = $"Invoice marked as {status}.";
+
+        _invoices = await client.GetFromJsonAsync<List<InvoiceResponseDto>>(
+            "api/invoices");
+    }
+
+    private async Task LoadAllInvoicesAsync()
+    {
+        var authState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var token = authState.User.FindFirst("access_token")?.Value;
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            _filterMessage = "Access token was not found.";
+            return;
+        }
+
+        var client = HttpClientFactory.CreateClient("LadestanderApi");
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        _invoices =
+            await client.GetFromJsonAsync<List<InvoiceResponseDto>>(
+                "api/invoices");
+
+        _filterMessage = null;
+    }
+
+    private async Task FilterInvoicesAsync()
+    {
+        _filterMessage = null;
+
+        var authState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var token = authState.User.FindFirst("access_token")?.Value;
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            _filterMessage = "Access token was not found.";
+            return;
+        }
+
+        var client = HttpClientFactory.CreateClient("LadestanderApi");
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await client.GetAsync(
+            $"api/invoices/by-customer-and-period?customerId={_filterCustomerId}&billingPeriodId={_filterBillingPeriodId}");
+
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            _invoices = new List<InvoiceResponseDto>();
+            _filterMessage = "No invoice found for the selected customer and billing period.";
+            return;
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _filterMessage = "Invoices could not be filtered.";
+            return;
+        }
+
+        var invoice =
+            await response.Content.ReadFromJsonAsync<InvoiceResponseDto>();
+
+        _invoices = invoice is null
+            ? new List<InvoiceResponseDto>()
+            : new List<InvoiceResponseDto> { invoice };
+
+        _filterMessage = "Filter applied.";
+    }
+
+    private async Task LoadCustomersAsync()
+    {
+        var authState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var token = authState.User.FindFirst("access_token")?.Value;
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            _errorMessage = "Access token was not found.";
+            return;
+        }
+
+        var client = HttpClientFactory.CreateClient("LadestanderApi");
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        _customers =
+            await client.GetFromJsonAsync<List<CustomerResponseDto>>(
+                "api/customers");
+    }
+
+    private async Task LoadBillingPeriodsAsync()
+    {
+        var authState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var token = authState.User.FindFirst("access_token")?.Value;
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            _errorMessage = "Access token was not found.";
+            return;
+        }
+
+        var client = HttpClientFactory.CreateClient("LadestanderApi");
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        _billingPeriods =
+            await client.GetFromJsonAsync<List<BillingPeriodResponseDto>>(
+                "api/billing-periods");
+    }
+}

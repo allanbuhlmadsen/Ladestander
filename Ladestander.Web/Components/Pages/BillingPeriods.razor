@@ -1,0 +1,421 @@
+﻿@page "/billing-periods"
+
+@using System.Net.Http.Json
+@using Ladestander.Web.DTOs
+@using System.Net.Http.Headers
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject IHttpClientFactory HttpClientFactory
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<h3>Billing Periods</h3>
+
+<hr />
+
+<h4>Create Billing Period</h4>
+
+<div class="mb-3">
+    <label>Name</label>
+    <input class="form-control" @bind="_createName" />
+</div>
+
+<div class="mb-3">
+    <label>Month name</label>
+    <input class="form-control" @bind="_createMonthName" />
+</div>
+
+<div class="mb-3">
+    <label>Month number</label>
+    <input class="form-control" type="number" @bind="_createMonthNumber" />
+</div>
+
+<div class="mb-3">
+    <label>Year</label>
+    <input class="form-control" type="number" @bind="_createYear" />
+</div>
+
+<div class="mb-3">
+    <label>Average price kWh</label>
+    <input class="form-control" type="number" step="0.01" @bind="_createAveragePriceKWh" />
+</div>
+
+<div class="mb-3">
+    <label>Average solar price kWh</label>
+    <input class="form-control" type="number" step="0.01" @bind="_createAverageSolarPriceKWh" />
+</div>
+
+<div class="form-check mb-3">
+    <input class="form-check-input" type="checkbox" @bind="_createIsClosed" />
+    <label class="form-check-label">Closed</label>
+</div>
+
+<button class="btn btn-primary" @onclick="CreateBillingPeriodAsync">
+    Create
+</button>
+
+@if (!string.IsNullOrWhiteSpace(_createMessage))
+{
+    <p class="mt-2">@_createMessage</p>
+}
+
+<hr />
+
+@if (_editBillingPeriodId is not null)
+{
+    <h4>Edit Billing Period</h4>
+
+    <div class="mb-3">
+        <label>Name</label>
+        <input class="form-control" @bind="_editName" />
+    </div>
+
+    <div class="mb-3">
+        <label>Month name</label>
+        <input class="form-control" @bind="_editMonthName" />
+    </div>
+
+    <div class="mb-3">
+        <label>Month number</label>
+        <input class="form-control" type="number" @bind="_editMonthNumber" />
+    </div>
+
+    <div class="mb-3">
+        <label>Year</label>
+        <input class="form-control" type="number" @bind="_editYear" />
+    </div>
+
+    <div class="mb-3">
+        <label>Average price kWh</label>
+        <input class="form-control" type="number" step="0.01" @bind="_editAveragePriceKWh" />
+    </div>
+
+    <div class="mb-3">
+        <label>Average solar price kWh</label>
+        <input class="form-control" type="number" step="0.01" @bind="_editAverageSolarPriceKWh" />
+    </div>
+
+    <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" @bind="_editIsClosed" />
+        <label class="form-check-label">Closed</label>
+    </div>
+
+    <button class="btn btn-primary" @onclick="UpdateBillingPeriodAsync">
+        Save changes
+    </button>
+
+    <button class="btn btn-secondary ms-2" @onclick="CancelEdit">
+        Cancel
+    </button>
+
+    @if (!string.IsNullOrWhiteSpace(_editMessage))
+    {
+        <p class="mt-2">@_editMessage</p>
+    }
+
+    <hr />
+}
+
+@if (!string.IsNullOrWhiteSpace(_errorMessage))
+{
+    <p class="text-danger">@_errorMessage</p>
+}
+else if (_billingPeriods is null)
+{
+    <p>Loading...</p>
+}
+else if (!_billingPeriods.Any())
+{
+    <p>No billing periods found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Month</th>
+                <th>Year</th>
+                <th>Average price kWh</th>
+                <th>Solar price kWh</th>
+                <th>Electricity bill updated</th>
+                <th>Closed</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var period in _billingPeriods)
+            {
+                <tr>
+                    <td>@period.BillingPeriodId</td>
+                    <td>@period.Name</td>
+                    <td>@period.MonthName (@period.MonthNumber)</td>
+                    <td>@period.Year</td>
+                    <td>@period.AveragePriceKWh</td>
+                    <td>@period.AverageSolarPriceKWh</td>
+                    <td>@period.IsElectricityBillUpdated</td>
+                    <td>@period.IsClosed</td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" @onclick="() => StartEdit(period)">
+                            Edit
+                        </button>
+
+                        @if (period.IsClosed)
+                        {
+                            <button class="btn btn-sm btn-warning ms-2" @onclick="() => ReopenBillingPeriodAsync(period.BillingPeriodId)">
+                                Reopen
+                            </button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private string _createName = "";
+    private string _createMonthName = "";
+    private int _createMonthNumber;
+    private int _createYear;
+    private string? _createMessage;
+
+    private decimal _createAveragePriceKWh;
+    private decimal _createAverageSolarPriceKWh;
+    private bool _createIsClosed;
+
+    private int? _editBillingPeriodId;
+
+    private string _editName = "";
+    private string _editMonthName = "";
+    private int _editMonthNumber;
+    private int _editYear;
+
+    private decimal _editAveragePriceKWh;
+    private decimal _editAverageSolarPriceKWh;
+
+    private bool _editIsClosed;
+
+    private string? _editMessage;
+
+    private List<BillingPeriodResponseDto>? _billingPeriods;
+    private string? _errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var user = authState.User;
+
+        if (user.Identity is null || !user.Identity.IsAuthenticated)
+        {
+            _errorMessage = "You must log in to view billing periods.";
+            _billingPeriods = new List<BillingPeriodResponseDto>();
+            return;
+        }
+
+        var token = user.FindFirst("access_token")?.Value;
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            _errorMessage = "Access token was not found.";
+            _billingPeriods = new List<BillingPeriodResponseDto>();
+            return;
+        }
+
+        var client = HttpClientFactory.CreateClient("LadestanderApi");
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        _billingPeriods = await client.GetFromJsonAsync<List<BillingPeriodResponseDto>>(
+            "api/billing-periods");
+    }
+
+    private async Task CreateBillingPeriodAsync()
+    {
+        _createMessage = null;
+
+        var request = new CreateBillingPeriodRequestDto(
+            _createName,
+            _createMonthName,
+            _createMonthNumber,
+            _createYear,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            _createAveragePriceKWh,
+            _createAverageSolarPriceKWh,
+            false,
+            _createIsClosed
+        );
+
+        var authState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var token = authState.User.FindFirst("access_token")?.Value;
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            _createMessage = "Access token was not found.";
+            return;
+        }
+
+        var client = HttpClientFactory.CreateClient("LadestanderApi");
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await client.PostAsJsonAsync("api/billing-periods", request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _createMessage = "Billing period could not be created.";
+            return;
+        }
+
+        _createMessage = "Billing period created.";
+
+        _billingPeriods = await client.GetFromJsonAsync<List<BillingPeriodResponseDto>>(
+            "api/billing-periods");
+    }
+
+    private void StartEdit(BillingPeriodResponseDto period)
+    {
+        _editBillingPeriodId = period.BillingPeriodId;
+
+        _editName = period.Name;
+        _editMonthName = period.MonthName;
+        _editMonthNumber = period.MonthNumber;
+        _editYear = period.Year;
+
+        _editAveragePriceKWh = period.AveragePriceKWh;
+        _editAverageSolarPriceKWh = period.AverageSolarPriceKWh;
+
+        _editIsClosed = period.IsClosed;
+
+        _editMessage = null;
+    }
+
+    private void CancelEdit()
+    {
+        _editBillingPeriodId = null;
+        _editMessage = null;
+    }
+
+    private async Task UpdateBillingPeriodAsync()
+    {
+        if (_editBillingPeriodId is null)
+        {
+            _editMessage = "No billing period selected.";
+            return;
+        }
+
+        _editMessage = null;
+
+        var request = new UpdateBillingPeriodRequestDto(
+            _editName,
+            _editMonthName,
+            _editMonthNumber,
+            _editYear,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            _editAveragePriceKWh,
+            _editAverageSolarPriceKWh,
+            false,
+            _editIsClosed
+        );
+
+        var authState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var token = authState.User.FindFirst("access_token")?.Value;
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            _editMessage = "Access token was not found.";
+            return;
+        }
+
+        var client = HttpClientFactory.CreateClient("LadestanderApi");
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await client.PutAsJsonAsync(
+            $"api/billing-periods/{_editBillingPeriodId}",
+            request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _editMessage = "Billing period could not be updated.";
+            return;
+        }
+
+        _editMessage = "Billing period updated.";
+
+        _billingPeriods = await client.GetFromJsonAsync<List<BillingPeriodResponseDto>>(
+            "api/billing-periods");
+
+        _editBillingPeriodId = null;
+    }
+
+    private async Task ReopenBillingPeriodAsync(int billingPeriodId)
+    {
+        var authState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var token = authState.User.FindFirst("access_token")?.Value;
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            _editMessage = "Access token was not found.";
+            return;
+        }
+
+        var client = HttpClientFactory.CreateClient("LadestanderApi");
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await client.PatchAsync(
+            $"api/billing-periods/{billingPeriodId}/reopen",
+            null);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _editMessage = "Billing period could not be reopened.";
+            return;
+        }
+
+        _editMessage = "Billing period reopened.";
+
+        _billingPeriods = await client.GetFromJsonAsync<List<BillingPeriodResponseDto>>(
+            "api/billing-periods");
+    }
+}

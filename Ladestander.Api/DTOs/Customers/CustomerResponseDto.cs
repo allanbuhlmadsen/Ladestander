@@ -3,6 +3,9 @@
 public record CustomerResponseDto(
     int CustomerId,
     string RfidNumber,
+    string FirstName,
+    string? MiddleName,
+    string LastName,
     string FullName,
     string? Email,
     string? Street,

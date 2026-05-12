@@ -10,6 +10,97 @@
 
 <h3>Customers</h3>
 
+<hr />
+
+<h4>Create Customer</h4>
+
+<div class="mb-3">
+    <label>RFID number</label>
+    <input class="form-control" @bind="_createRfidNumber" />
+</div>
+
+<div class="mb-3">
+    <label>First name</label>
+    <input class="form-control" @bind="_createFirstName" />
+</div>
+
+<div class="mb-3">
+    <label>Middle name</label>
+    <input class="form-control" @bind="_createMiddleName" />
+</div>
+
+<div class="mb-3">
+    <label>Last name</label>
+    <input class="form-control" @bind="_createLastName" />
+</div>
+
+<div class="mb-3">
+    <label>Email</label>
+    <input class="form-control" @bind="_createEmail" />
+</div>
+
+<button class="btn btn-primary" @onclick="CreateCustomerAsync">
+    Create Customer
+</button>
+
+@if (!string.IsNullOrWhiteSpace(_createMessage))
+{
+    <p class="mt-2">@_createMessage</p>
+}
+
+<hr />
+
+@if (_editCustomerId is not null)
+{
+    <hr />
+
+    <h4>Edit Customer</h4>
+
+    <div class="mb-3">
+        <label>RFID number</label>
+        <input class="form-control" @bind="_editRfidNumber" />
+    </div>
+
+    <div class="mb-3">
+        <label>First name</label>
+        <input class="form-control" @bind="_editFirstName" />
+    </div>
+
+    <div class="mb-3">
+        <label>Middle name</label>
+        <input class="form-control" @bind="_editMiddleName" />
+    </div>
+
+    <div class="mb-3">
+        <label>Last name</label>
+        <input class="form-control" @bind="_editLastName" />
+    </div>
+
+    <div class="mb-3">
+        <label>Email</label>
+        <input class="form-control" @bind="_editEmail" />
+    </div>
+
+    <div class="form-check mb-3">
+        <input class="form-check-input"
+               type="checkbox"
+               @bind="_editIsActive" />
+
+        <label class="form-check-label">
+            Active
+        </label>
+    </div>
+
+    <button class="btn btn-primary" @onclick="UpdateCustomerAsync">
+        Save Changes
+    </button>
+
+    @if (!string.IsNullOrWhiteSpace(_editMessage))
+    {
+        <p class="mt-2">@_editMessage</p>
+    }
+}
+
 @if (!string.IsNullOrWhiteSpace(_errorMessage))
 {
     <p class="text-danger">@_errorMessage</p>
@@ -31,6 +122,7 @@ else
                 <th>Full name</th>
                 <th>Email</th>
                 <th>Active</th>
+                <th>Actions</th>
             </tr>
         </thead>
 
@@ -42,6 +134,18 @@ else
                     <td>@customer.FullName</td>
                     <td>@customer.Email</td>
                     <td>@customer.IsActive</td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" @onclick="() => StartEdit(customer)">
+                            Edit
+                        </button>
+
+                        @if (customer.IsActive)
+                        {
+                            <button class="btn btn-sm btn-warning ms-2" @onclick="() => SoftDeleteCustomerAsync(customer.CustomerId)">
+                                Deactivate
+                            </button>
+                        }
+                    </td>
                 </tr>
             }
         </tbody>
@@ -49,6 +153,23 @@ else
 }
 
 @code {
+
+    private string _createRfidNumber = "";
+    private string _createFirstName = "";
+    private string? _createMiddleName;
+    private string _createLastName = "";
+    private string? _createEmail;
+    private string? _createMessage;
+
+    private int? _editCustomerId;
+    private string _editRfidNumber = "";
+    private string _editFirstName = "";
+    private string? _editMiddleName;
+    private string _editLastName = "";
+    private string? _editEmail;
+    private bool _editIsActive;
+    private string? _editMessage;
+    private string? _deleteMessage;
 
     private List<CustomerResponseDto>? _customers;
     private string? _errorMessage;
@@ -83,5 +204,161 @@ else
 
         _customers = await client.GetFromJsonAsync<List<CustomerResponseDto>>(
             "api/customers");
+    }
+
+    private async Task CreateCustomerAsync()
+    {
+        _createMessage = null;
+
+        var authState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var token = authState.User.FindFirst("access_token")?.Value;
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            _createMessage = "Access token was not found.";
+            return;
+        }
+
+        var request = new CreateCustomerRequestDto(
+            _createRfidNumber,
+            _createFirstName,
+            _createMiddleName,
+            _createLastName,
+            _createEmail,
+            null,
+            null,
+            null,
+            null
+        );
+
+        var client = HttpClientFactory.CreateClient("LadestanderApi");
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await client.PostAsJsonAsync(
+            "api/customers",
+            request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _createMessage = "Customer could not be created.";
+            return;
+        }
+
+        _createMessage = "Customer created.";
+
+        _customers =
+            await client.GetFromJsonAsync<List<CustomerResponseDto>>(
+                "api/customers");
+    }
+    private void StartEdit(CustomerResponseDto customer)
+    {
+        _editCustomerId = customer.CustomerId;
+
+        _editRfidNumber = customer.RfidNumber;
+        _editFirstName = customer.FirstName;
+        _editMiddleName = customer.MiddleName;
+        _editLastName = customer.LastName;
+        _editEmail = customer.Email;
+        _editIsActive = customer.IsActive;
+
+        _editMessage = null;
+    }
+    
+    private async Task UpdateCustomerAsync()
+    {
+        if (_editCustomerId is null)
+        {
+            _editMessage = "No customer selected.";
+            return;
+        }
+
+        _editMessage = null;
+
+        var authState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var token = authState.User.FindFirst("access_token")?.Value;
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            _editMessage = "Access token was not found.";
+            return;
+        }
+
+        var request = new UpdateCustomerRequestDto(
+            _editRfidNumber,
+            _editFirstName,
+            _editMiddleName,
+            _editLastName,
+            _editEmail,
+            null,
+            null,
+            null,
+            null,
+            _editIsActive
+        );
+
+        var client = HttpClientFactory.CreateClient("LadestanderApi");
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await client.PutAsJsonAsync(
+            $"api/customers/{_editCustomerId}",
+            request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _editMessage = "Customer could not be updated.";
+            return;
+        }
+
+        _editMessage = "Customer updated.";
+
+        _customers =
+            await client.GetFromJsonAsync<List<CustomerResponseDto>>(
+                "api/customers");
+
+        _editCustomerId = null;
+    }
+
+    private async Task SoftDeleteCustomerAsync(int customerId)
+    {
+        _deleteMessage = null;
+
+        var authState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var token = authState.User.FindFirst("access_token")?.Value;
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            _deleteMessage = "Access token was not found.";
+            return;
+        }
+
+        var client = HttpClientFactory.CreateClient("LadestanderApi");
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        var response =
+            await client.DeleteAsync($"api/customers/{customerId}");
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _deleteMessage = "Customer could not be deactivated.";
+            return;
+        }
+
+        _deleteMessage = "Customer deactivated.";
+
+        _customers =
+            await client.GetFromJsonAsync<List<CustomerResponseDto>>(
+                "api/customers");
     }
 }

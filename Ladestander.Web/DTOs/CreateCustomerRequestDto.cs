@@ -1,16 +1,13 @@
 ﻿namespace Ladestander.Web.DTOs;
 
-public record CustomerResponseDto(
-    int CustomerId,
+public record CreateCustomerRequestDto(
     string RfidNumber,
     string FirstName,
     string? MiddleName,
     string LastName,
-    string FullName,
     string? Email,
     string? Street,
     string? HouseNumber,
     int? PostalCode,
-    string? City,
-    bool IsActive
+    string? City
 );
