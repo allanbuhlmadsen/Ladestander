@@ -7,6 +7,7 @@
 
 @inject IHttpClientFactory HttpClientFactory
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JS
 
 <h3>Billing Periods</h3>
 
@@ -157,13 +158,17 @@ else
                     <td>@period.IsElectricityBillUpdated</td>
                     <td>@period.IsClosed</td>
                     <td>
-                        <button class="btn btn-sm btn-secondary" @onclick="() => StartEdit(period)">
-                            Edit
-                        </button>
+                        @if (!period.IsClosed)
+                        {
+                            <button class="btn btn-sm btn-secondary" @onclick="() => StartEdit(period)">
+                                Edit
+                            </button>
+                        }
 
                         @if (period.IsClosed)
                         {
-                            <button class="btn btn-sm btn-warning ms-2" @onclick="() => ReopenBillingPeriodAsync(period.BillingPeriodId)">
+                            <button class="btn btn-sm btn-warning ms-2"
+                                    @onclick="() => ConfirmReopenBillingPeriodAsync(period.BillingPeriodId)">
                                 Reopen
                             </button>
                         }
@@ -230,8 +235,13 @@ else
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
 
-        _billingPeriods = await client.GetFromJsonAsync<List<BillingPeriodResponseDto>>(
+        var billingPeriods = await client.GetFromJsonAsync<List<BillingPeriodResponseDto>>(
             "api/billing-periods");
+
+        _billingPeriods = billingPeriods?
+            .OrderByDescending(p => p.Year)
+            .ThenByDescending(p => p.MonthNumber)
+            .ToList();
     }
 
     private async Task CreateBillingPeriodAsync()
@@ -289,8 +299,13 @@ else
 
         _createMessage = "Billing period created.";
 
-        _billingPeriods = await client.GetFromJsonAsync<List<BillingPeriodResponseDto>>(
+        var billingPeriods = await client.GetFromJsonAsync<List<BillingPeriodResponseDto>>(
             "api/billing-periods");
+
+        _billingPeriods = billingPeriods?
+            .OrderByDescending(p => p.Year)
+            .ThenByDescending(p => p.MonthNumber)
+            .ToList();
     }
 
     private void StartEdit(BillingPeriodResponseDto period)
@@ -373,14 +388,32 @@ else
 
         if (!response.IsSuccessStatusCode)
         {
-            _editMessage = "Billing period could not be updated.";
+            var error = await response.Content.ReadFromJsonAsync<ErrorResponseDto>();
+
+            if (error?.Errors is not null && error.Errors.Any())
+            {
+                _editMessage = string.Join(
+                    " ",
+                    error.Errors.SelectMany(e => e.Value));
+            }
+            else
+            {
+                _editMessage = error?.Message
+                    ?? "Billing period could not be updated.";
+            }
+
             return;
         }
 
         _editMessage = "Billing period updated.";
 
-        _billingPeriods = await client.GetFromJsonAsync<List<BillingPeriodResponseDto>>(
+        var billingPeriods = await client.GetFromJsonAsync<List<BillingPeriodResponseDto>>(
             "api/billing-periods");
+
+        _billingPeriods = billingPeriods?
+            .OrderByDescending(p => p.Year)
+            .ThenByDescending(p => p.MonthNumber)
+            .ToList();
 
         _editBillingPeriodId = null;
     }
@@ -415,7 +448,26 @@ else
 
         _editMessage = "Billing period reopened.";
 
-        _billingPeriods = await client.GetFromJsonAsync<List<BillingPeriodResponseDto>>(
+        var billingPeriods = await client.GetFromJsonAsync<List<BillingPeriodResponseDto>>(
             "api/billing-periods");
+
+        _billingPeriods = billingPeriods?
+            .OrderByDescending(p => p.Year)
+            .ThenByDescending(p => p.MonthNumber)
+            .ToList();
+    }
+
+    private async Task ConfirmReopenBillingPeriodAsync(int billingPeriodId)
+    {
+        var confirmed = await JS.InvokeAsync<bool>(
+            "confirm",
+            "Are you sure you want to reopen this billing period?");
+
+        if (!confirmed)
+        {
+            return;
+        }
+
+        await ReopenBillingPeriodAsync(billingPeriodId);
     }
 }

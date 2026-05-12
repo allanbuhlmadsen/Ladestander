@@ -48,6 +48,11 @@
     <p class="mt-2">@_createMessage</p>
 }
 
+@if (!string.IsNullOrWhiteSpace(_deleteMessage))
+{
+    <p class="mt-2">@_deleteMessage</p>
+}
+
 <hr />
 
 @if (_editCustomerId is not null)
@@ -244,7 +249,20 @@ else
 
         if (!response.IsSuccessStatusCode)
         {
-            _createMessage = "Customer could not be created.";
+            var error = await response.Content.ReadFromJsonAsync<ErrorResponseDto>();
+
+            if (error?.Errors is not null && error.Errors.Any())
+            {
+                _createMessage = string.Join(
+                    " ",
+                    error.Errors.SelectMany(e => e.Value));
+            }
+            else
+            {
+                _createMessage = error?.Message
+                    ?? "Customer could not be created.";
+            }
+
             return;
         }
 
@@ -313,7 +331,20 @@ else
 
         if (!response.IsSuccessStatusCode)
         {
-            _editMessage = "Customer could not be updated.";
+            var error = await response.Content.ReadFromJsonAsync<ErrorResponseDto>();
+
+            if (error?.Errors is not null && error.Errors.Any())
+            {
+                _editMessage = string.Join(
+                    " ",
+                    error.Errors.SelectMany(e => e.Value));
+            }
+            else
+            {
+                _editMessage = error?.Message
+                    ?? "Customer could not be updated.";
+            }
+
             return;
         }
 
@@ -351,7 +382,20 @@ else
 
         if (!response.IsSuccessStatusCode)
         {
-            _deleteMessage = "Customer could not be deactivated.";
+            var error = await response.Content.ReadFromJsonAsync<ErrorResponseDto>();
+
+            if (error?.Errors is not null && error.Errors.Any())
+            {
+                _deleteMessage = string.Join(
+                    " ",
+                    error.Errors.SelectMany(e => e.Value));
+            }
+            else
+            {
+                _deleteMessage = error?.Message
+                    ?? "Customer could not be deactivated.";
+            }
+
             return;
         }
 

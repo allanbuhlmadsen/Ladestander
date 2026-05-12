@@ -265,7 +265,20 @@ else
 
         if (!response.IsSuccessStatusCode)
         {
-            _generateMessage = "Invoice could not be generated.";
+            var error = await response.Content.ReadFromJsonAsync<ErrorResponseDto>();
+
+            if (error?.Errors is not null && error.Errors.Any())
+            {
+                _generateMessage = string.Join(
+                    " ",
+                    error.Errors.SelectMany(e => e.Value));
+            }
+            else
+            {
+                _generateMessage = error?.Message
+                    ?? "Invoice could not be generated.";
+            }
+
             return;
         }
 
@@ -303,7 +316,20 @@ else
 
         if (!response.IsSuccessStatusCode)
         {
-            _statusMessage = "Invoice status could not be updated.";
+            var error = await response.Content.ReadFromJsonAsync<ErrorResponseDto>();
+
+            if (error?.Errors is not null && error.Errors.Any())
+            {
+                _statusMessage = string.Join(
+                    " ",
+                    error.Errors.SelectMany(e => e.Value));
+            }
+            else
+            {
+                _statusMessage = error?.Message
+                    ?? "Invoice status could not be updated.";
+            }
+
             return;
         }
 

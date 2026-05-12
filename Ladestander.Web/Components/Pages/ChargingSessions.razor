@@ -289,7 +289,20 @@ else
 
         if (!response.IsSuccessStatusCode)
         {
-            _importMessage = "Test charging session could not be created.";
+            var error = await response.Content.ReadFromJsonAsync<ErrorResponseDto>();
+
+            if (error?.Errors is not null && error.Errors.Any())
+            {
+                _importMessage = string.Join(
+                    " ",
+                    error.Errors.SelectMany(e => e.Value));
+            }
+            else
+            {
+                _importMessage = error?.Message
+                    ?? "Test charging session could not be created.";
+            }
+
             return;
         }
 
@@ -352,11 +365,42 @@ else
 
         if (!response.IsSuccessStatusCode)
         {
-            _csvImportMessage = "CSV import failed.";
+            var error = await response.Content.ReadFromJsonAsync<ErrorResponseDto>();
+
+            if (error?.Errors is not null && error.Errors.Any())
+            {
+                _csvImportMessage = string.Join(
+                    " ",
+                    error.Errors.SelectMany(e => e.Value));
+            }
+            else
+            {
+                _csvImportMessage = error?.Message
+                    ?? "CSV import failed.";
+            }
+
             return;
         }
 
-        _csvImportMessage = "CSV imported successfully.";
+        var importResult =
+            await response.Content.ReadFromJsonAsync<ChargingSessionCsvImportResultDto>();
+
+        if (importResult is null)
+        {
+            _csvImportMessage = "CSV import completed, but no import result was returned.";
+        }
+        else if (importResult.Errors.Any())
+        {
+            _csvImportMessage =
+                $"Imported: {importResult.ImportedCount}. " +
+                $"Skipped: {importResult.SkippedCount}. " +
+                string.Join(" ", importResult.Errors);
+        }
+        else
+        {
+            _csvImportMessage =
+                $"CSV import completed. Imported: {importResult.ImportedCount}. Skipped: {importResult.SkippedCount}.";
+        }
 
         _chargingSessions =
             await client.GetFromJsonAsync<List<ChargingSessionResponseDto>>(
