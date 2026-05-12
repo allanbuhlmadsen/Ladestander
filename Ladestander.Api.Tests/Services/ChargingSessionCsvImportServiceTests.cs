@@ -87,7 +87,7 @@ public class ChargingSessionCsvImportServiceTests
 
         var file = CreateCsvFile("""
         "Session ID","Charger Alias","SN","Start Time","End Time","Duration(h)","Energy Delivered(kW·h)","Total Cost(kr)","Session Status","User Name","Authorization Type","Stop Reason"
-        "S1","Lader 1","SN1","30/07/2024 16:02","30/07/2024 18:02","2","10.500","0","Free session","Ukendt Kunde","RFID","EVDisconnected"
+        "S1","Lader 1","SN1","30/07/2024 16:02","30/07/2024 18:02","2","0","0","10.500","Free session","RFID","Ukendt Kunde"
         """);
 
         _billingPeriodRepositoryMock
@@ -119,7 +119,7 @@ public class ChargingSessionCsvImportServiceTests
 
         var file = CreateCsvFile("""
         "Session ID","Charger Alias","SN","Start Time","End Time","Duration(h)","Energy Delivered(kW·h)","Total Cost(kr)","Session Status","User Name","Authorization Type","Stop Reason"
-        "S1","Lader 1","SN1","30/07/2024 16:02","30/07/2024 18:02","2","10.500","0","Free session","Test Kunde","RFID","EVDisconnected"
+        "S1","Lader 1","SN1","30/07/2024 16:02","30/07/2024 18:02","2","0","0","10.500","Free session","RFID","Test Kunde"
         """);
 
         _billingPeriodRepositoryMock
@@ -164,7 +164,7 @@ public class ChargingSessionCsvImportServiceTests
 
         var file = CreateCsvFile("""
         "Session ID","Charger Alias","SN","Start Time","End Time","Duration(h)","Energy Delivered(kW·h)","Total Cost(kr)","Session Status","User Name","Authorization Type","Stop Reason"
-        "S1","Lader 1","SN1","30/07/2024 16:02","30/07/2024 18:02","2","10.500","0","Free session","Test Kunde","RFID","EVDisconnected"
+        "S1","Lader 1","SN1","30/07/2024 16:02","30/07/2024 18:02","2","0","0","10.500","Free session","RFID","Test Kunde"
         """);
 
         _billingPeriodRepositoryMock
@@ -218,7 +218,7 @@ public class ChargingSessionCsvImportServiceTests
         // Arrange
         var file = CreateCsvFile("""
         "Session ID","Charger Alias","SN","Start Time","End Time","Duration(h)","Energy Delivered(kW·h)","Total Cost(kr)","Session Status","User Name","Authorization Type","Stop Reason"
-        "S1","Lader 1","SN1","30/07/2024 16:02","30/07/2024 18:02","2","10.500","0","Free session","Test Kunde","RFID","EVDisconnected"
+        "S1","Lader 1","SN1","30/07/2024 16:02","30/07/2024 18:02","2","0","0","10.500","Free session","RFID","Test Kunde"
         """);
 
         // Act
@@ -244,7 +244,7 @@ public class ChargingSessionCsvImportServiceTests
         var file = CreateCsvFile("""
         "Session ID","Charger Alias","SN","Start Time","End Time","Duration(h)","Energy Delivered(kW·h)","Total Cost(kr)","Session Status","User Name","Authorization Type","Stop Reason"
 
-        "S1","Lader 1","SN1","30/07/2024 16:02","30/07/2024 18:02","2","10.500","0","Free session","Test Kunde","RFID","EVDisconnected"
+        "S1","Lader 1","SN1","30/07/2024 16:02","30/07/2024 18:02","2","0","0","10.500","Free session","RFID","Test Kunde"
 
         """);
 
@@ -288,7 +288,7 @@ public class ChargingSessionCsvImportServiceTests
         var row = string.Join(delimiter, new[]
         {
         "S1", "Lader 1", "SN1", "30/07/2024 16:02", "30/07/2024 18:02", "2",
-        "10.500", "0", "Free session", "Test Kunde", "RFID", "EVDisconnected"
+        "0", "0", "10.500", "Free session", "RFID", "Test Kunde"
         });
 
         var file = CreateCsvFile(header + Environment.NewLine + row);
