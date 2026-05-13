@@ -3,6 +3,7 @@ using Ladestander.Api.Entities;
 using Ladestander.Api.Repositories.Interfaces;
 using Ladestander.Api.Services;
 using Microsoft.AspNetCore.Http;
+using Ladestander.Api.Tests.TestHelpers;
 using System.IO;
 using Moq;
 using Xunit;
@@ -16,6 +17,7 @@ public class ChargingSessionCsvImportServiceTests
     private readonly Mock<IChargingSessionRepository> _chargingSessionRepositoryMock;
 
     private readonly ChargingSessionCsvImportService _service;
+    private readonly Ladestander.Api.Data.AppDbContext _dbContext;
 
     public ChargingSessionCsvImportServiceTests()
     {
@@ -23,10 +25,13 @@ public class ChargingSessionCsvImportServiceTests
         _billingPeriodRepositoryMock = new Mock<IBillingPeriodRepository>();
         _chargingSessionRepositoryMock = new Mock<IChargingSessionRepository>();
 
+        _dbContext = SqliteTestDbContextFactory.CreateContext();
+
         _service = new ChargingSessionCsvImportService(
             _customerRepositoryMock.Object,
             _billingPeriodRepositoryMock.Object,
-            _chargingSessionRepositoryMock.Object);
+            _chargingSessionRepositoryMock.Object,
+            _dbContext);
     }
 
     [Fact]
@@ -85,9 +90,21 @@ public class ChargingSessionCsvImportServiceTests
         // Arrange
         var billingPeriodId = 1;
 
+        _dbContext.BillingPeriods.Add(new BillingPeriod
+        {
+            BillingPeriodId = billingPeriodId,
+            Name = "July 2024",
+            MonthName = "July",
+            MonthNumber = 7,
+            Year = 2024,
+            IsClosed = false
+        });
+
+        await _dbContext.SaveChangesAsync();
+
         var file = CreateCsvFile("""
         "Session ID","Charger Alias","SN","Start Time","End Time","Duration(h)","Energy Delivered(kW·h)","Total Cost(kr)","Session Status","User Name","Authorization Type","Stop Reason"
-        "S1","Lader 1","SN1","30/07/2024 16:02","30/07/2024 18:02","2","0","0","10.500","Free session","RFID","Ukendt Kunde"
+        "S1","Lader 1","SN1","30/07/2024 16:02","30/07/2024 18:02","2","10.500","0","Free session","Ukendt Kunde","RFID","EVDisconnected"
         """);
 
         _billingPeriodRepositoryMock
@@ -117,9 +134,21 @@ public class ChargingSessionCsvImportServiceTests
         // Arrange
         var billingPeriodId = 1;
 
+        _dbContext.BillingPeriods.Add(new BillingPeriod
+        {
+            BillingPeriodId = billingPeriodId,
+            Name = "July 2024",
+            MonthName = "July",
+            MonthNumber = 7,
+            Year = 2024,
+            IsClosed = false
+        });
+
+        await _dbContext.SaveChangesAsync();
+
         var file = CreateCsvFile("""
         "Session ID","Charger Alias","SN","Start Time","End Time","Duration(h)","Energy Delivered(kW·h)","Total Cost(kr)","Session Status","User Name","Authorization Type","Stop Reason"
-        "S1","Lader 1","SN1","30/07/2024 16:02","30/07/2024 18:02","2","0","0","10.500","Free session","RFID","Test Kunde"
+        "S1","Lader 1","SN1","30/07/2024 16:02","30/07/2024 18:02","2","10.500","0","Free session","Test Kunde","RFID","EVDisconnected"
         """);
 
         _billingPeriodRepositoryMock
@@ -162,9 +191,21 @@ public class ChargingSessionCsvImportServiceTests
         // Arrange
         var billingPeriodId = 1;
 
+        _dbContext.BillingPeriods.Add(new BillingPeriod
+        {
+            BillingPeriodId = billingPeriodId,
+            Name = "July 2024",
+            MonthName = "July",
+            MonthNumber = 7,
+            Year = 2024,
+            IsClosed = false
+        });
+
+        await _dbContext.SaveChangesAsync();
+
         var file = CreateCsvFile("""
         "Session ID","Charger Alias","SN","Start Time","End Time","Duration(h)","Energy Delivered(kW·h)","Total Cost(kr)","Session Status","User Name","Authorization Type","Stop Reason"
-        "S1","Lader 1","SN1","30/07/2024 16:02","30/07/2024 18:02","2","0","0","10.500","Free session","RFID","Test Kunde"
+        "S1","Lader 1","SN1","30/07/2024 16:02","30/07/2024 18:02","2","10.500","0","Free session","Test Kunde","RFID","EVDisconnected"
         """);
 
         _billingPeriodRepositoryMock
@@ -218,7 +259,32 @@ public class ChargingSessionCsvImportServiceTests
         // Arrange
         var file = CreateCsvFile("""
         "Session ID","Charger Alias","SN","Start Time","End Time","Duration(h)","Energy Delivered(kW·h)","Total Cost(kr)","Session Status","User Name","Authorization Type","Stop Reason"
-        "S1","Lader 1","SN1","30/07/2024 16:02","30/07/2024 18:02","2","0","0","10.500","Free session","RFID","Test Kunde"
+        "S1","Lader 1","SN1","30/07/2024 16:02","30/07/2024 18:02","2","10.500","0","Free session","Test Kunde","RFID","EVDisconnected"
+        """);
+
+        // Act
+        var result = await _service.ParseAsync(file);
+
+        // Assert
+        Assert.Single(result);
+
+        var row = result[0];
+
+        Assert.Equal("S1", row.SessionId);
+        Assert.Equal("Lader 1", row.ChargerAlias);
+        Assert.Equal(new DateTime(2024, 7, 30, 16, 2, 0), row.StartTime);
+        Assert.Equal(new DateTime(2024, 7, 30, 18, 2, 0), row.EndTime);
+        Assert.Equal(10.500m, row.EnergyKWh);
+        Assert.Equal("Test Kunde", row.UserName);
+    }
+
+    [Fact]
+    public async Task ParseAsync_ReturnsRow_WhenColumnsAreReordered()
+    {
+        // Arrange
+        var file = CreateCsvFile("""
+        "User Name","Energy Delivered(kW·h)","End Time","Start Time","Charger Alias","Session ID","SN","Duration(h)","Total Cost(kr)","Session Status","Authorization Type","Stop Reason"
+        "Test Kunde","10.500","30/07/2024 18:02","30/07/2024 16:02","Lader 1","S1","SN1","2","0","Free session","RFID","EVDisconnected"
         """);
 
         // Act
@@ -244,7 +310,7 @@ public class ChargingSessionCsvImportServiceTests
         var file = CreateCsvFile("""
         "Session ID","Charger Alias","SN","Start Time","End Time","Duration(h)","Energy Delivered(kW·h)","Total Cost(kr)","Session Status","User Name","Authorization Type","Stop Reason"
 
-        "S1","Lader 1","SN1","30/07/2024 16:02","30/07/2024 18:02","2","0","0","10.500","Free session","RFID","Test Kunde"
+        "S1","Lader 1","SN1","30/07/2024 16:02","30/07/2024 18:02","2","10.500","0","Free session","Test Kunde","RFID","EVDisconnected"
 
         """);
 
@@ -280,15 +346,15 @@ public class ChargingSessionCsvImportServiceTests
         // Arrange
         var header = string.Join(delimiter, new[]
         {
-        "Session ID", "Charger Alias", "SN", "Start Time", "End Time", "Duration(h)",
-        "Energy Delivered(kW·h)", "Total Cost(kr)", "Session Status", "User Name",
-        "Authorization Type", "Stop Reason"
+            "Session ID", "Charger Alias", "SN", "Start Time", "End Time", "Duration(h)",
+            "Energy Delivered(kW·h)", "Total Cost(kr)", "Session Status", "User Name",
+            "Authorization Type", "Stop Reason"
         });
 
         var row = string.Join(delimiter, new[]
         {
-        "S1", "Lader 1", "SN1", "30/07/2024 16:02", "30/07/2024 18:02", "2",
-        "0", "0", "10.500", "Free session", "RFID", "Test Kunde"
+            "S1", "Lader 1", "SN1", "30/07/2024 16:02", "30/07/2024 18:02", "2",
+            "10.500", "0", "Free session", "Test Kunde", "RFID", "EVDisconnected"
         });
 
         var file = CreateCsvFile(header + Environment.NewLine + row);

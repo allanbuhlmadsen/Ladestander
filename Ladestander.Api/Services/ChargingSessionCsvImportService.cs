@@ -2,6 +2,7 @@
 using Ladestander.Api.Entities;
 using Ladestander.Api.Repositories.Interfaces;
 using Ladestander.Api.Services.Interfaces;
+using Ladestander.Api.Data;
 using System.Globalization;
 
 namespace Ladestander.Api.Services;
@@ -11,15 +12,18 @@ public class ChargingSessionCsvImportService : IChargingSessionCsvImportService
     private readonly ICustomerRepository _customerRepository;
     private readonly IBillingPeriodRepository _billingPeriodRepository;
     private readonly IChargingSessionRepository _chargingSessionRepository;
+    private readonly AppDbContext _dbContext;
 
     public ChargingSessionCsvImportService(
-    ICustomerRepository customerRepository,
-    IBillingPeriodRepository billingPeriodRepository,
-    IChargingSessionRepository chargingSessionRepository)
+        ICustomerRepository customerRepository,
+        IBillingPeriodRepository billingPeriodRepository,
+        IChargingSessionRepository chargingSessionRepository,
+        AppDbContext dbContext)
     {
         _customerRepository = customerRepository;
         _billingPeriodRepository = billingPeriodRepository;
         _chargingSessionRepository = chargingSessionRepository;
+        _dbContext = dbContext;
     }
 
     public async Task<List<ChargingSessionCsvRowDto>> ParseAsync(IFormFile file)
@@ -30,6 +34,22 @@ public class ChargingSessionCsvImportService : IChargingSessionCsvImportService
 
         var headerLine = await reader.ReadLineAsync();
 
+        if (string.IsNullOrWhiteSpace(headerLine))
+        {
+            return rows;
+        }
+
+        var headerDelimiter = DetectDelimiter(headerLine);
+
+        var headers = headerLine
+            .Split(headerDelimiter)
+            .Select(CleanCsvValue)
+            .ToList();
+
+        var headerMap = headers
+            .Select((header, index) => new { header, index })
+            .ToDictionary(x => x.header, x => x.index);
+
         string? line;
 
         while ((line = await reader.ReadLineAsync()) is not null)
@@ -39,11 +59,8 @@ public class ChargingSessionCsvImportService : IChargingSessionCsvImportService
                 continue;
             }
 
-            var columns = line.Contains(';')
-                ? line.Split(';')
-                : line.Contains('\t')
-                    ? line.Split('\t')
-                    : line.Split(',');
+            var delimiter = DetectDelimiter(line);
+            var columns = line.Split(delimiter);
 
             if (columns.Length < 10)
             {
@@ -51,12 +68,20 @@ public class ChargingSessionCsvImportService : IChargingSessionCsvImportService
             }
 
             var row = new ChargingSessionCsvRowDto(
-                SessionId: columns[0].Trim().Trim('"'),
-                ChargerAlias: columns[1].Trim().Trim('"'),
-                StartTime: DateTime.ParseExact(columns[3].Trim().Trim('"'), "dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture),
-                EndTime: DateTime.ParseExact(columns[4].Trim().Trim('"'), "dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture),
-                EnergyKWh: decimal.Parse(columns[8].Trim().Trim('"'), CultureInfo.InvariantCulture),
-                UserName: columns[11].Trim().Trim('"')
+                SessionId: CleanCsvValue(columns[headerMap["Session ID"]]),
+                ChargerAlias: CleanCsvValue(columns[headerMap["Charger Alias"]]),
+                StartTime: DateTime.ParseExact(
+                    CleanCsvValue(columns[headerMap["Start Time"]]),
+                    "dd/MM/yyyy HH:mm",
+                    CultureInfo.InvariantCulture),
+                EndTime: DateTime.ParseExact(
+                    CleanCsvValue(columns[headerMap["End Time"]]),
+                    "dd/MM/yyyy HH:mm",
+                    CultureInfo.InvariantCulture),
+                EnergyKWh: decimal.Parse(
+                    CleanCsvValue(columns[headerMap["Energy Delivered(kW·h)"]]),
+                    CultureInfo.InvariantCulture),
+                UserName: CleanCsvValue(columns[headerMap["User Name"]])
             );
 
             rows.Add(row);
@@ -137,10 +162,45 @@ public class ChargingSessionCsvImportService : IChargingSessionCsvImportService
             importedCount++;
         }
 
+        var importLog = new ImportLog
+        {
+            BillingPeriodId = billingPeriodId,
+            ImportedAt = DateTime.UtcNow,
+            ImportedCount = importedCount,
+            SkippedCount = skippedCount,
+            ErrorMessages = errors.Any()
+                ? string.Join(" | ", errors.Distinct())
+                : null,
+            FileName = file.FileName
+        };
+
+        _dbContext.ImportLogs.Add(importLog);
+        await _dbContext.SaveChangesAsync();
+
         return new ChargingSessionCsvImportResultDto(
             ImportedCount: importedCount,
             SkippedCount: skippedCount,
             Errors: errors
         );
+    }
+
+    private static char DetectDelimiter(string line)
+    {
+        if (line.Contains(';'))
+        {
+            return ';';
+        }
+
+        if (line.Contains('\t'))
+        {
+            return '\t';
+        }
+
+        return ',';
+    }
+
+    private static string CleanCsvValue(string value)
+    {
+        return value.Trim().Trim('"');
     }
 }

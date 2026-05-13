@@ -13,6 +13,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Text;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 namespace Ladestander.Api
 {
@@ -110,6 +112,22 @@ namespace Ladestander.Api
             builder.Services.AddScoped<ChargingSessionValidator>();
             builder.Services.AddScoped<InvoiceValidator>();
 
+            builder.Services.AddRateLimiter(options =>
+            {
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+                options.AddPolicy("LoginRateLimit", httpContext =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                        factory: _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 5,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                            QueueLimit = 0
+                        }));
+            });
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -120,6 +138,8 @@ namespace Ladestander.Api
             }
 
             app.UseHttpsRedirection();
+
+            app.UseRateLimiter();
 
             app.UseAuthentication();
             app.UseAuthorization();

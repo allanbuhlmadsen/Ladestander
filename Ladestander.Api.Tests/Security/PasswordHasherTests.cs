@@ -38,7 +38,7 @@ public class PasswordHasherTests
     }
 
     [Fact]
-    public void Hash_ReturnsSameHash_WhenPasswordIsSame()
+    public void Hash_ReturnsDifferentHashes_WhenPasswordIsSame()
     {
         // Arrange
         const string password = "MySecurePassword123";
@@ -48,6 +48,8 @@ public class PasswordHasherTests
         var secondHash = _passwordHasher.Hash(password);
 
         // Assert
-        Assert.Equal(firstHash, secondHash);
+        Assert.NotEqual(firstHash, secondHash);
+        Assert.True(_passwordHasher.Verify(password, firstHash));
+        Assert.True(_passwordHasher.Verify(password, secondHash));
     }
 }

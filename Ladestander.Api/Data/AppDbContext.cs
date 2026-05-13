@@ -15,6 +15,7 @@ public class AppDbContext : DbContext
     public DbSet<ChargingSession> ChargingSessions => Set<ChargingSession>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<AdminUser> AdminUsers => Set<AdminUser>();
+    public DbSet<ImportLog> ImportLogs => Set<ImportLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -113,6 +114,21 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Username).HasMaxLength(100).IsRequired();
             entity.Property(e => e.PasswordHash).HasMaxLength(255).IsRequired();
             entity.Property(e => e.Role).HasMaxLength(50).IsRequired();
+        });
+
+        modelBuilder.Entity<ImportLog>(entity =>
+        {
+            entity.ToTable("ImportLog");
+            entity.HasKey(e => e.ImportLogId);
+
+            entity.Property(e => e.ImportedAt).IsRequired();
+            entity.Property(e => e.FileName).HasMaxLength(255);
+            entity.Property(e => e.ErrorMessages).HasMaxLength(4000);
+
+            entity.HasOne(e => e.BillingPeriod)
+                .WithMany()
+                .HasForeignKey(e => e.BillingPeriodId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

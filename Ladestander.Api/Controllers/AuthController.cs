@@ -1,6 +1,7 @@
 ﻿using Ladestander.Api.DTOs.Auth;
 using Ladestander.Api.Security.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Ladestander.Api.Controllers;
 
@@ -16,6 +17,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [EnableRateLimiting("LoginRateLimit")]
     public async Task<ActionResult<LoginResponseDto>> Login(LoginRequestDto request)
     {
         var result = await _authService.LoginAsync(request.Username, request.Password);

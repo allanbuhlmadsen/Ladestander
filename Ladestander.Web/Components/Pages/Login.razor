@@ -2,6 +2,13 @@
 
 <h3>Login</h3>
 
+@if (!string.IsNullOrWhiteSpace(ErrorMessage))
+{
+    <div class="alert alert-danger" role="alert">
+        @ErrorMessage
+    </div>
+}
+
 <form method="post" action="/web-auth/login">
     <div class="mb-3">
         <label>Username</label>
@@ -17,3 +24,16 @@
         Login
     </button>
 </form>
+
+@code {
+    [SupplyParameterFromQuery(Name = "error")]
+    public string? Error { get; set; }
+
+    private string? ErrorMessage =>
+        Error switch
+        {
+            "1" => "Forkert brugernavn eller password.",
+            "rate-limit" => "For mange loginforsøg. Vent et øjeblik og prøv igen.",
+            _ => null
+        };
+}

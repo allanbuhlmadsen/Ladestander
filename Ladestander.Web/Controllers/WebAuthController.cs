@@ -33,6 +33,11 @@ public class WebAuthController : Controller
 
         if (!response.IsSuccessStatusCode)
         {
+            if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            {
+                return Redirect("/login?error=rate-limit");
+            }
+
             return Redirect("/login?error=1");
         }
 

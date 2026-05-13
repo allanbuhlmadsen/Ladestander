@@ -1,21 +1,26 @@
-﻿using System.Security.Cryptography;
-using System.Text;
+﻿using Ladestander.Api.Entities;
 using Ladestander.Api.Security.Interfaces;
+using Microsoft.AspNetCore.Identity;
 
 namespace Ladestander.Api.Security;
 
 public class PasswordHasher : IPasswordHasher
 {
+    private readonly PasswordHasher<AdminUser> _passwordHasher = new();
+
     public string Hash(string password)
     {
-        using var sha256 = SHA256.Create();
-        byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-        return Convert.ToBase64String(hashBytes);
+        return _passwordHasher.HashPassword(new AdminUser(), password);
     }
 
     public bool Verify(string password, string passwordHash)
     {
-        string hash = Hash(password);
-        return hash == passwordHash;
+        var result = _passwordHasher.VerifyHashedPassword(
+            new AdminUser(),
+            passwordHash,
+            password);
+
+        return result == PasswordVerificationResult.Success ||
+               result == PasswordVerificationResult.SuccessRehashNeeded;
     }
 }
