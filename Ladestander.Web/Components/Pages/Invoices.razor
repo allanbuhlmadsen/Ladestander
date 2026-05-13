@@ -9,18 +9,18 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
-<h3>Invoices</h3>
+<h3>Fakturaer</h3>
 
 <hr />
 
-<h4>Generate Invoice</h4>
+<h4>Generér faktura</h4>
 
 <div class="mb-3">
-    <label>Customer</label>
+    <label>Kunde</label>
 
     <select class="form-select" @bind="_generateCustomerId">
 
-        <option value="0">Select customer</option>
+        <option value="0">Vælg kunde</option>
 
         @if (_customers is not null)
         {
@@ -36,11 +36,11 @@
 </div>
 
 <div class="mb-3">
-    <label>Billing Period</label>
+    <label>Periode</label>
 
     <select class="form-select" @bind="_generateBillingPeriodId">
 
-        <option value="0">Select billing period</option>
+        <option value="0">Vælg periode</option>
 
         @if (_billingPeriods is not null)
         {
@@ -56,7 +56,7 @@
 </div>
 
 <button class="btn btn-primary" @onclick="GenerateInvoiceAsync">
-    Generate Invoice
+    Generér faktura
 </button>
 
 @if (!string.IsNullOrWhiteSpace(_generateMessage))
@@ -71,14 +71,14 @@
 
 <hr />
 
-<h4>Filter Invoices</h4>
+<h4>Filtrer fakturaer</h4>
 
 <div class="mb-3">
-    <label>Customer</label>
+    <label>Kunde</label>
 
     <select class="form-select" @bind="_filterCustomerId">
 
-        <option value="0">Select customer</option>
+        <option value="0">Vælg kunde</option>
 
         @if (_customers is not null)
         {
@@ -94,11 +94,11 @@
 </div>
 
 <div class="mb-3">
-    <label>Billing Period</label>
+    <label>Periode</label>
 
     <select class="form-select" @bind="_filterBillingPeriodId">
 
-        <option value="0">Select billing period</option>
+        <option value="0">Vælg periode</option>
 
         @if (_billingPeriods is not null)
         {
@@ -114,11 +114,11 @@
 </div>
 
 <button class="btn btn-secondary" @onclick="FilterInvoicesAsync">
-    Filter
+    Filtrer
 </button>
 
 <button class="btn btn-outline-secondary ms-2" @onclick="LoadAllInvoicesAsync">
-    Show All
+    Vis alle
 </button>
 
 @if (!string.IsNullOrWhiteSpace(_filterMessage))
@@ -134,11 +134,11 @@
 }
 else if (_invoices is null)
 {
-    <p>Loading...</p>
+    <p>Indlæser...</p>
 }
 else if (!_invoices.Any())
 {
-    <p>No invoices found.</p>
+    <p>Ingen fakturaer fundet.</p>
 }
 else
 {
@@ -146,15 +146,15 @@ else
         <thead>
             <tr>
                 <th>Id</th>
-                <th>Customer</th>
-                <th>Billing period</th>
+                <th>Kunde</th>
+                <th>Periode</th>
                 <th>Status</th>
-                <th>Sent</th>
-                <th>Paid</th>
-                <th>Total kWh</th>
-                <th>Total amount</th>
-                <th>Created</th>
-                <th>Actions</th>
+                <th>Sendt</th>
+                <th>Betalt</th>
+                <th>Samlet kWh</th>
+                <th>Samlet beløb</th>
+                <th>Oprettet</th>
+                <th>Handlinger</th>
             </tr>
         </thead>
 
@@ -173,11 +173,11 @@ else
                     <td>@invoice.CreatedAt</td>
                     <td>
                         <button class="btn btn-sm btn-secondary" @onclick='() => UpdateInvoiceStatusAsync(invoice.InvoiceId, "Sent")'>
-                            Mark Sent
+                            Markér som sendt
                         </button>
 
                         <button class="btn btn-sm btn-success ms-2" @onclick='() => UpdateInvoiceStatusAsync(invoice.InvoiceId, "Paid")'>
-                            Mark Paid
+                            Markér som betalt
                         </button>
                     </td>
                 </tr>
@@ -211,7 +211,7 @@ else
 
         if (user.Identity is null || !user.Identity.IsAuthenticated)
         {
-            _errorMessage = "You must log in to view invoices.";
+            _errorMessage = "Du skal være logget ind for at se fakturaer.";
             _invoices = new List<InvoiceResponseDto>();
             return;
         }
@@ -220,7 +220,7 @@ else
 
         if (string.IsNullOrWhiteSpace(token))
         {
-            _errorMessage = "Access token was not found.";
+            _errorMessage = "Adgangstoken blev ikke fundet.";
             _invoices = new List<InvoiceResponseDto>();
             return;
         }
@@ -250,7 +250,7 @@ else
 
         if (client is null)
         {
-            _generateMessage = "Access token was not found.";
+            _generateMessage = "Adgangstoken blev ikke fundet.";
             return;
         }
 
@@ -262,12 +262,12 @@ else
         {
             _generateMessage = await ApiErrorHelper.ReadErrorMessageAsync(
                 response,
-                "Invoice could not be generated.");
+                "Fakturaen kunne ikke genereres.");
 
             return;
         }
 
-        _generateMessage = "Invoice generated.";
+        _generateMessage = "Fakturaen blev genereret.";
 
         _invoices = await client.GetFromJsonAsync<List<InvoiceResponseDto>>(
             "api/invoices");
@@ -283,7 +283,7 @@ else
 
         if (client is null)
         {
-            _statusMessage = "Access token was not found.";
+            _statusMessage = "Adgangstoken blev ikke fundet.";
             return;
         }
 
@@ -295,12 +295,17 @@ else
         {
             _statusMessage = await ApiErrorHelper.ReadErrorMessageAsync(
                 response,
-                "Invoice status could not be updated.");
+                "Fakturastatus kunne ikke opdateres.");
 
             return;
         }
 
-        _statusMessage = $"Invoice marked as {status}.";
+        _statusMessage = status switch
+        {
+            "Sent" => "Fakturaen blev markeret som sendt.",
+            "Paid" => "Fakturaen blev markeret som betalt.",
+            _ => "Fakturastatus blev opdateret."
+        };
 
         _invoices = await client.GetFromJsonAsync<List<InvoiceResponseDto>>(
             "api/invoices");
@@ -312,7 +317,7 @@ else
 
         if (client is null)
         {
-            _filterMessage = "Access token was not found.";
+            _filterMessage = "Adgangstoken blev ikke fundet.";
             return;
         }
 
@@ -331,14 +336,14 @@ else
 
         if (client is null)
         {
-            _filterMessage = "Access token was not found.";
+            _filterMessage = "Adgangstoken blev ikke fundet.";
             return;
         }
 
         if (_filterCustomerId <= 0 || _filterBillingPeriodId <= 0)
         {
             _invoices = new List<InvoiceResponseDto>();
-            _filterMessage = "Please select both customer and billing period.";
+            _filterMessage = "Vælg både kunde og periode.";
             return;
         }
 
@@ -348,13 +353,13 @@ else
         if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
             _invoices = new List<InvoiceResponseDto>();
-            _filterMessage = "No invoice found for the selected customer and billing period.";
+            _filterMessage = "Ingen faktura fundet for den valgte kunde og periode.";
             return;
         }
 
         if (!response.IsSuccessStatusCode)
         {
-            _filterMessage = "Invoices could not be filtered.";
+            _filterMessage = "Fakturaer kunne ikke filtreres.";
             return;
         }
 
@@ -365,7 +370,7 @@ else
             ? new List<InvoiceResponseDto>()
             : new List<InvoiceResponseDto> { invoice };
 
-        _filterMessage = "Filter applied.";
+        _filterMessage = "Filter anvendt.";
     }
 
     private async Task LoadCustomersAsync()
@@ -374,7 +379,7 @@ else
 
         if (client is null)
         {
-            _errorMessage = "Access token was not found.";
+            _errorMessage = "Adgangstoken blev ikke fundet.";
             return;
         }
 
@@ -389,7 +394,7 @@ else
 
         if (client is null)
         {
-            _errorMessage = "Access token was not found.";
+            _errorMessage = "Adgangstoken blev ikke fundet.";
             return;
         }
 
@@ -407,7 +412,7 @@ else
 
         if (string.IsNullOrWhiteSpace(token))
         {
-            _errorMessage = "Access token was not found.";
+            _errorMessage = "Adgangstoken blev ikke fundet.";
             return null;
         }
 

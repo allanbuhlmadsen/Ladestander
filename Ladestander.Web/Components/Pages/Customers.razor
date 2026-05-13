@@ -9,39 +9,39 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
-<h3>Customers</h3>
+<h3>Kunder</h3>
 
 <hr />
 
-<h4>Create Customer</h4>
+<h4>Opret kunde</h4>
 
 <div class="mb-3">
-    <label>RFID number</label>
+    <label>RFID-nummer</label>
     <input class="form-control" @bind="_createRfidNumber" />
 </div>
 
 <div class="mb-3">
-    <label>First name</label>
+    <label>Fornavn</label>
     <input class="form-control" @bind="_createFirstName" />
 </div>
 
 <div class="mb-3">
-    <label>Middle name</label>
+    <label>Mellemnavn</label>
     <input class="form-control" @bind="_createMiddleName" />
 </div>
 
 <div class="mb-3">
-    <label>Last name</label>
+    <label>Efternavn</label>
     <input class="form-control" @bind="_createLastName" />
 </div>
 
 <div class="mb-3">
-    <label>Email</label>
+    <label>E-mail</label>
     <input class="form-control" @bind="_createEmail" />
 </div>
 
 <button class="btn btn-primary" @onclick="CreateCustomerAsync">
-    Create Customer
+    Opret kunde
 </button>
 
 @if (!string.IsNullOrWhiteSpace(_createMessage))
@@ -60,30 +60,30 @@
 {
     <hr />
 
-    <h4>Edit Customer</h4>
+    <h4>Rediger kunde</h4>
 
     <div class="mb-3">
-        <label>RFID number</label>
+        <label>RFID-nummer</label>
         <input class="form-control" @bind="_editRfidNumber" />
     </div>
 
     <div class="mb-3">
-        <label>First name</label>
+        <label>Fornavn</label>
         <input class="form-control" @bind="_editFirstName" />
     </div>
 
     <div class="mb-3">
-        <label>Middle name</label>
+        <label>Mellemnavn</label>
         <input class="form-control" @bind="_editMiddleName" />
     </div>
 
     <div class="mb-3">
-        <label>Last name</label>
+        <label>Efternavn</label>
         <input class="form-control" @bind="_editLastName" />
     </div>
 
     <div class="mb-3">
-        <label>Email</label>
+        <label>E-mail</label>
         <input class="form-control" @bind="_editEmail" />
     </div>
 
@@ -93,12 +93,12 @@
                @bind="_editIsActive" />
 
         <label class="form-check-label">
-            Active
+            Aktiv
         </label>
     </div>
 
     <button class="btn btn-primary" @onclick="UpdateCustomerAsync">
-        Save Changes
+        Gem ændringer
     </button>
 
     @if (!string.IsNullOrWhiteSpace(_editMessage))
@@ -113,11 +113,11 @@
 }
 else if (_customers is null)
 {
-    <p>Loading...</p>
+    <p>Indlæser...</p>
 }
 else if (!_customers.Any())
 {
-    <p>No customers found.</p>
+    <p>Ingen kunder fundet.</p>
 }
 else
 {
@@ -125,10 +125,10 @@ else
         <thead>
             <tr>
                 <th>Id</th>
-                <th>Full name</th>
-                <th>Email</th>
-                <th>Active</th>
-                <th>Actions</th>
+                <th>Fulde navn</th>
+                <th>E-mail</th>
+                <th>Aktiv</th>
+                <th>Handlinger</th>
             </tr>
         </thead>
 
@@ -142,13 +142,13 @@ else
                     <td>@customer.IsActive</td>
                     <td>
                         <button class="btn btn-sm btn-secondary" @onclick="() => StartEdit(customer)">
-                            Edit
+                            Rediger
                         </button>
 
                         @if (customer.IsActive)
                         {
                             <button class="btn btn-sm btn-warning ms-2" @onclick="() => SoftDeleteCustomerAsync(customer.CustomerId)">
-                                Deactivate
+                                Deaktiver
                             </button>
                         }
                     </td>
@@ -189,7 +189,7 @@ else
 
         if (user.Identity is null || !user.Identity.IsAuthenticated)
         {
-            _errorMessage = "You must log in to view customers.";
+            _errorMessage = "Du skal være logget ind for at se kunder.";
             _customers = new List<CustomerResponseDto>();
             return;
         }
@@ -198,7 +198,7 @@ else
 
         if (string.IsNullOrWhiteSpace(token))
         {
-            _errorMessage = "Access token was not found.";
+            _errorMessage = "Adgangstoken blev ikke fundet.";
             _customers = new List<CustomerResponseDto>();
             return;
         }
@@ -222,7 +222,7 @@ else
 
         if (client is null)
         {
-            _createMessage = "Access token was not found.";
+            _createMessage = "Adgangstoken blev ikke fundet.";
             return;
         }
 
@@ -246,12 +246,12 @@ else
         {
             _createMessage = await ApiErrorHelper.ReadErrorMessageAsync(
                 response,
-                "Customer could not be created.");
+                "Kunden kunne ikke oprettes.");
 
             return;
         }
 
-        _createMessage = "Customer created.";
+        _createMessage = "Kunden blev oprettet.";
 
         _customers =
             await client.GetFromJsonAsync<List<CustomerResponseDto>>(
@@ -276,7 +276,7 @@ else
     {
         if (_editCustomerId is null)
         {
-            _editMessage = "No customer selected.";
+            _editMessage = "Ingen kunde valgt.";
             return;
         }
 
@@ -286,7 +286,7 @@ else
 
         if (client is null)
         {
-            _editMessage = "Access token was not found.";
+            _editMessage = "Adgangstoken blev ikke fundet.";
             return;
         }
 
@@ -313,12 +313,12 @@ else
 
             _editMessage = await ApiErrorHelper.ReadErrorMessageAsync(
                 response,
-                "Customer could not be updated.");
+                "Kunden kunne ikke opdateres.");
 
             return;
         }
 
-        _editMessage = "Customer updated.";
+        _editMessage = "Kunden blev opdateret.";
 
         _customers =
             await client.GetFromJsonAsync<List<CustomerResponseDto>>(
@@ -335,7 +335,7 @@ else
 
         if (client is null)
         {
-            _deleteMessage = "Access token was not found.";
+            _deleteMessage = "Adgangstoken blev ikke fundet.";
             return;
         }
 
@@ -346,12 +346,12 @@ else
         {
             _deleteMessage = await ApiErrorHelper.ReadErrorMessageAsync(
                 response,
-                "Customer could not be deactivated.");
+                "Kunden kunne ikke deaktiveres.");
 
             return;
         }
 
-        _deleteMessage = "Customer deactivated.";
+        _deleteMessage = "Kunden blev deaktiveret.";
 
         _customers =
             await client.GetFromJsonAsync<List<CustomerResponseDto>>(
@@ -367,7 +367,7 @@ else
 
         if (string.IsNullOrWhiteSpace(token))
         {
-            _errorMessage = "Access token was not found.";
+            _errorMessage = "Adgangstoken blev ikke fundet.";
             return null;
         }
 

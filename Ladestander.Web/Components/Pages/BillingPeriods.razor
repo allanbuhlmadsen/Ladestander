@@ -10,49 +10,49 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IJSRuntime JS
 
-<h3>Billing Periods</h3>
+<h3>Perioder</h3>
 
 <hr />
 
-<h4>Create Billing Period</h4>
+<h4>Opret periode</h4>
 
 <div class="mb-3">
-    <label>Name</label>
+    <label>Navn</label>
     <input class="form-control" @bind="_createName" />
 </div>
 
 <div class="mb-3">
-    <label>Month name</label>
+    <label>Månedsnavn</label>
     <input class="form-control" @bind="_createMonthName" />
 </div>
 
 <div class="mb-3">
-    <label>Month number</label>
+    <label>Månedsnummer</label>
     <input class="form-control" type="number" @bind="_createMonthNumber" />
 </div>
 
 <div class="mb-3">
-    <label>Year</label>
+    <label>År</label>
     <input class="form-control" type="number" @bind="_createYear" />
 </div>
 
 <div class="mb-3">
-    <label>Average price kWh</label>
+    <label>Gennemsnitspris pr. kWh</label>
     <input class="form-control" type="number" step="0.01" @bind="_createAveragePriceKWh" />
 </div>
 
 <div class="mb-3">
-    <label>Average solar price kWh</label>
+    <label>Gennemsnitligt solcelletilskud pr. kWh</label>
     <input class="form-control" type="number" step="0.01" @bind="_createAverageSolarPriceKWh" />
 </div>
 
 <div class="form-check mb-3">
     <input class="form-check-input" type="checkbox" @bind="_createIsClosed" />
-    <label class="form-check-label">Closed</label>
+    <label class="form-check-label">Lukket</label>
 </div>
 
 <button class="btn btn-primary" @onclick="CreateBillingPeriodAsync">
-    Create
+    Opret
 </button>
 
 @if (!string.IsNullOrWhiteSpace(_createMessage))
@@ -64,49 +64,49 @@
 
 @if (_editBillingPeriodId is not null)
 {
-    <h4>Edit Billing Period</h4>
+    <h4>Rediger Periode</h4>
 
     <div class="mb-3">
-        <label>Name</label>
+        <label>Navn</label>
         <input class="form-control" @bind="_editName" />
     </div>
 
     <div class="mb-3">
-        <label>Month name</label>
+        <label>Månedsnavn</label>
         <input class="form-control" @bind="_editMonthName" />
     </div>
 
     <div class="mb-3">
-        <label>Month number</label>
+        <label>Månedsnummer</label>
         <input class="form-control" type="number" @bind="_editMonthNumber" />
     </div>
 
     <div class="mb-3">
-        <label>Year</label>
+        <label>År</label>
         <input class="form-control" type="number" @bind="_editYear" />
     </div>
 
     <div class="mb-3">
-        <label>Average price kWh</label>
+        <label>Gennemsnitspris pr. kWh</label>
         <input class="form-control" type="number" step="0.01" @bind="_editAveragePriceKWh" />
     </div>
 
     <div class="mb-3">
-        <label>Average solar price kWh</label>
+        <label>Gennemsnitligt solcelletilskud pr. kWh</label>
         <input class="form-control" type="number" step="0.01" @bind="_editAverageSolarPriceKWh" />
     </div>
 
     <div class="form-check mb-3">
         <input class="form-check-input" type="checkbox" @bind="_editIsClosed" />
-        <label class="form-check-label">Closed</label>
+        <label class="form-check-label">Lukket</label>
     </div>
 
     <button class="btn btn-primary" @onclick="UpdateBillingPeriodAsync">
-        Save changes
+        Gem ændringer
     </button>
 
     <button class="btn btn-secondary ms-2" @onclick="CancelEdit">
-        Cancel
+        Annuller
     </button>
 
     @if (!string.IsNullOrWhiteSpace(_editMessage))
@@ -123,11 +123,11 @@
 }
 else if (_billingPeriods is null)
 {
-    <p>Loading...</p>
+    <p>Indlæser...</p>
 }
 else if (!_billingPeriods.Any())
 {
-    <p>No billing periods found.</p>
+    <p>Ingen perioder fundet.</p>
 }
 else
 {
@@ -135,14 +135,14 @@ else
         <thead>
             <tr>
                 <th>Id</th>
-                <th>Name</th>
-                <th>Month</th>
-                <th>Year</th>
-                <th>Average price kWh</th>
-                <th>Solar price kWh</th>
-                <th>Electricity bill updated</th>
-                <th>Closed</th>
-                <th>Actions</th>
+                <th>Navn</th>
+                <th>Måned</th>
+                <th>År</th>
+                <th>Gennemsnitspris pr. kWh</th>
+                <th>Gennemsnitligt solcelletilskud pr. kWh</th>
+                <th>Elregning opdateret</th>
+                <th>Lukket</th>
+                <th>Handlinger</th>
             </tr>
         </thead>
 
@@ -162,7 +162,7 @@ else
                         @if (!period.IsClosed)
                         {
                             <button class="btn btn-sm btn-secondary" @onclick="() => StartEdit(period)">
-                                Edit
+                                Rediger
                             </button>
                         }
 
@@ -170,7 +170,7 @@ else
                         {
                             <button class="btn btn-sm btn-warning ms-2"
                                     @onclick="() => ConfirmReopenBillingPeriodAsync(period.BillingPeriodId)">
-                                Reopen
+                                Genåbn
                             </button>
                         }
                     </td>
@@ -217,7 +217,7 @@ else
 
         if (user.Identity is null || !user.Identity.IsAuthenticated)
         {
-            _errorMessage = "You must log in to view billing periods.";
+            _errorMessage = "Du skal være logget ind for at se perioder.";
             _billingPeriods = new List<BillingPeriodResponseDto>();
             return;
         }
@@ -226,7 +226,7 @@ else
 
         if (string.IsNullOrWhiteSpace(token))
         {
-            _errorMessage = "Access token was not found.";
+            _errorMessage = "Adgangstoken blev ikke fundet.";
             _billingPeriods = new List<BillingPeriodResponseDto>();
             return;
         }
@@ -280,7 +280,7 @@ else
 
         if (client is null)
         {
-            _createMessage = "Access token was not found.";
+            _createMessage = "Adgangstoken blev ikke fundet.";
             return;
         }
 
@@ -290,12 +290,12 @@ else
         {
             _createMessage = await ApiErrorHelper.ReadErrorMessageAsync(
                 response,
-                "Billing period could not be created.");
+                "Perioden kunne ikke oprettes.");
 
             return;
         }
 
-        _createMessage = "Billing period created.";
+        _createMessage = "Perioden blev oprettet.";
 
         var billingPeriods = await client.GetFromJsonAsync<List<BillingPeriodResponseDto>>(
             "api/billing-periods");
@@ -333,7 +333,7 @@ else
     {
         if (_editBillingPeriodId is null)
         {
-            _editMessage = "No billing period selected.";
+            _editMessage = "Ingen periode valgt.";
             return;
         }
 
@@ -368,7 +368,7 @@ else
 
         if (client is null)
         {
-            _editMessage = "Access token was not found.";
+            _editMessage = "Adgangstoken blev ikke fundet.";
             return;
         }
 
@@ -380,12 +380,12 @@ else
         {
             _editMessage = await ApiErrorHelper.ReadErrorMessageAsync(
                 response,
-                "Billing period could not be updated.");
+                "Perioden kunne ikke opdateres.");
 
             return;
         }
 
-        _editMessage = "Billing period updated.";
+        _editMessage = "Perioden blev opdateret.";
 
         var billingPeriods = await client.GetFromJsonAsync<List<BillingPeriodResponseDto>>(
             "api/billing-periods");
@@ -404,7 +404,7 @@ else
 
         if (client is null)
         {
-            _editMessage = "Access token was not found.";
+            _editMessage = "Adgangstoken blev ikke fundet.";
             return;
         }
 
@@ -416,12 +416,12 @@ else
         {
             _editMessage = await ApiErrorHelper.ReadErrorMessageAsync(
                 response,
-                "Billing period could not be reopened.");
+                "Perioden kunne ikke genåbnes.");
 
             return;
         }
 
-        _editMessage = "Billing period reopened.";
+        _editMessage = "Perioden blev genåbnet.";
 
         var billingPeriods = await client.GetFromJsonAsync<List<BillingPeriodResponseDto>>(
             "api/billing-periods");
@@ -436,7 +436,7 @@ else
     {
         var confirmed = await JS.InvokeAsync<bool>(
             "confirm",
-            "Are you sure you want to reopen this billing period?");
+            "Er du sikker på, at du vil genåbne denne periode?");
 
         if (!confirmed)
         {
@@ -455,7 +455,7 @@ else
 
         if (string.IsNullOrWhiteSpace(token))
         {
-            _errorMessage = "Access token was not found.";
+            _errorMessage = "Adgangstoken blev ikke fundet.";
             return null;
         }
 

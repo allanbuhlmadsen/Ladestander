@@ -10,17 +10,17 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
-<h3>Charging Sessions</h3>
+<h3>Ladeposter</h3>
 
 <hr />
 
-<h4>Create Test Charging Session</h4>
+<h4>Opret test-ladepost</h4>
 
 <div class="mb-3">
-    <label>Customer</label>
+    <label>Kunde</label>
 
     <select class="form-select" @bind="_importCustomerId">
-        <option value="0">Select customer</option>
+        <option value="0">Vælg kunde</option>
 
         @if (_customers is not null)
         {
@@ -35,10 +35,10 @@
 </div>
 
 <div class="mb-3">
-    <label>Billing Period</label>
+    <label>Periode</label>
 
     <select class="form-select" @bind="_importBillingPeriodId">
-        <option value="0">Select billing period</option>
+        <option value="0">Vælg periode</option>
 
         @if (_billingPeriods is not null)
         {
@@ -53,12 +53,12 @@
 </div>
 
 <div class="mb-3">
-    <label>Energy kWh</label>
+    <label>Energi kWh</label>
     <input class="form-control" type="number" step="0.001" @bind="_importEnergyKWh" />
 </div>
 
 <button class="btn btn-primary" @onclick="ImportChargingSessionAsync">
-    Create Test Charging Session
+    Opret test-ladepost
 </button>
 
 @if (!string.IsNullOrWhiteSpace(_importMessage))
@@ -68,13 +68,13 @@
 
 <hr />
 
-<h4>Import CSV</h4>
+<h4>Importér CSV</h4>
 
 <div class="mb-3">
-    <label>Billing Period</label>
+    <label>Periode</label>
 
     <select class="form-select" @bind="_csvBillingPeriodId">
-        <option value="0">Select billing period</option>
+        <option value="0">Vælg periode</option>
 
         @if (_billingPeriods is not null)
         {
@@ -89,12 +89,12 @@
 </div>
 
 <div class="mb-3">
-    <label>CSV file</label>
+    <label>CSV-fil</label>
     <InputFile OnChange="OnCsvFileSelected" />
 </div>
 
 <button class="btn btn-primary" @onclick="ImportCsvAsync">
-    Import CSV
+    Importér CSV
 </button>
 
 @if (!string.IsNullOrWhiteSpace(_csvImportMessage))
@@ -104,13 +104,13 @@
 
 <hr />
 
-<h4>Filter Charging Sessions</h4>
+<h4>Filtrer ladeposter</h4>
 
 <div class="mb-3">
-    <label>Customer</label>
+    <label>Kunde</label>
 
     <select class="form-select" @bind="_filterCustomerId">
-        <option value="0">Select customer</option>
+        <option value="0">Vælg kunde</option>
 
         @if (_customers is not null)
         {
@@ -125,10 +125,10 @@
 </div>
 
 <div class="mb-3">
-    <label>Billing Period</label>
+    <label>Periode</label>
 
     <select class="form-select" @bind="_filterBillingPeriodId">
-        <option value="0">Select billing period</option>
+        <option value="0">Vælg periode</option>
 
         @if (_billingPeriods is not null)
         {
@@ -143,11 +143,11 @@
 </div>
 
 <button class="btn btn-secondary" @onclick="FilterChargingSessionsAsync">
-    Filter
+    Filtrer
 </button>
 
 <button class="btn btn-outline-secondary ms-2" @onclick="LoadAllChargingSessionsAsync">
-    Show All
+    Vis alle
 </button>
 
 @if (!string.IsNullOrWhiteSpace(_filterMessage))
@@ -163,11 +163,11 @@
 }
 else if (_chargingSessions is null)
 {
-    <p>Loading...</p>
+    <p>Indlæser...</p>
 }
 else if (!_chargingSessions.Any())
 {
-    <p>No charging sessions found.</p>
+    <p>Ingen ladeposter fundet.</p>
 }
 else
 {
@@ -175,13 +175,13 @@ else
         <thead>
             <tr>
                 <th>Id</th>
-                <th>Customer</th>
-                <th>Billing period</th>
-                <th>Invoice</th>
-                <th>Charger</th>
-                <th>Start time</th>
-                <th>Energy kWh</th>
-                <th>Source user</th>
+                <th>Kunde</th>
+                <th>Periode</th>
+                <th>Faktura</th>
+                <th>Lader</th>
+                <th>Starttidspunkt</th>
+                <th>Energi kWh</th>
+                <th>Kildebruger</th>
             </tr>
         </thead>
 
@@ -231,7 +231,7 @@ else
 
         if (user.Identity is null || !user.Identity.IsAuthenticated)
         {
-            _errorMessage = "You must log in to view charging sessions.";
+            _errorMessage = "Du skal være logget ind for at se ladeposter.";
             _chargingSessions = new List<ChargingSessionResponseDto>();
             return;
         }
@@ -240,7 +240,7 @@ else
 
         if (string.IsNullOrWhiteSpace(token))
         {
-            _errorMessage = "Access token was not found.";
+            _errorMessage = "Adgangstoken blev ikke fundet.";
             _chargingSessions = new List<ChargingSessionResponseDto>();
             return;
         }
@@ -264,17 +264,17 @@ else
         var request = new ChargingSessionImportRequestDto(
             _importCustomerId,
             _importBillingPeriodId,
-            "Test charger",
+            "Testlader",
             DateTime.UtcNow,
             _importEnergyKWh,
-            "Frontend Test"
+            "Frontend-test"
         );
 
         var client = await CreateAuthorizedClientAsync();
 
         if (client is null)
         {
-            _importMessage = "Access token was not found.";
+            _importMessage = "Adgangstoken blev ikke fundet.";
             return;
         }
 
@@ -286,12 +286,12 @@ else
         {
             _importMessage = await ApiErrorHelper.ReadErrorMessageAsync(
                 response,
-                "Test charging session could not be created.");
+                "Test-ladeposten kunne ikke oprettes.");
 
             return;
         }
 
-        _importMessage = "Test charging session created.";
+        _importMessage = "Test-ladeposten blev oprettet.";
 
         _chargingSessions =
             await client.GetFromJsonAsync<List<ChargingSessionResponseDto>>(
@@ -309,7 +309,7 @@ else
 
         if (_csvFile is null)
         {
-            _csvImportMessage = "Please select a CSV file.";
+            _csvImportMessage = "Vælg en CSV-fil.";
             return;
         }
 
@@ -317,7 +317,7 @@ else
 
         if (client is null)
         {
-            _csvImportMessage = "Access token was not found.";
+            _csvImportMessage = "Adgangstoken blev ikke fundet.";
             return;
         }
 
@@ -344,7 +344,7 @@ else
         {
             _csvImportMessage = await ApiErrorHelper.ReadErrorMessageAsync(
                 response,
-                "CSV import failed.");
+                "CSV-importen fejlede.");
 
             return;
         }
@@ -354,19 +354,19 @@ else
 
         if (importResult is null)
         {
-            _csvImportMessage = "CSV import completed, but no import result was returned.";
+            _csvImportMessage = "CSV-importen blev gennemført, men der blev ikke returneret et importresultat.";
         }
         else if (importResult.Errors.Any())
         {
             _csvImportMessage =
-                $"Imported: {importResult.ImportedCount}. " +
-                $"Skipped: {importResult.SkippedCount}. " +
+                $"Importeret: {importResult.ImportedCount}. " +
+                $"Sprunget over: {importResult.SkippedCount}. " +
                 string.Join(" ", importResult.Errors);
         }
         else
         {
             _csvImportMessage =
-                $"CSV import completed. Imported: {importResult.ImportedCount}. Skipped: {importResult.SkippedCount}.";
+                $"CSV-importen blev gennemført. Importeret: {importResult.ImportedCount}. Sprunget over: {importResult.SkippedCount}.";
         }
 
         _chargingSessions =
@@ -380,7 +380,7 @@ else
 
         if (client is null)
         {
-            _filterMessage = "Access token was not found.";
+            _filterMessage = "Adgangstoken blev ikke fundet.";
             return;
         }
 
@@ -399,7 +399,7 @@ else
 
         if (client is null)
         {
-            _filterMessage = "Access token was not found.";
+            _filterMessage = "Adgangstoken blev ikke fundet.";
             return;
         }
 
@@ -410,7 +410,7 @@ else
         if (allChargingSessions is null)
         {
             _chargingSessions = new List<ChargingSessionResponseDto>();
-            _filterMessage = "No charging sessions found.";
+            _filterMessage = "Ingen ladeposter fundet.";
             return;
         }
 
@@ -421,7 +421,7 @@ else
                 (_filterBillingPeriodId == 0 || session.BillingPeriodId == _filterBillingPeriodId))
             .ToList();
 
-        _filterMessage = "Filter applied.";
+        _filterMessage = "Filter anvendt.";
     }
 
     private async Task LoadCustomersAsync()
@@ -430,7 +430,7 @@ else
 
         if (client is null)
         {
-            _errorMessage = "Access token was not found.";
+            _errorMessage = "Adgangstoken blev ikke fundet.";
             return;
         }
 
@@ -445,7 +445,7 @@ else
 
         if (client is null)
         {
-            _errorMessage = "Access token was not found.";
+            _errorMessage = "Adgangstoken blev ikke fundet.";
             return;
         }
 
@@ -463,7 +463,7 @@ else
 
         if (string.IsNullOrWhiteSpace(token))
         {
-            _errorMessage = "Access token was not found.";
+            _errorMessage = "Adgangstoken blev ikke fundet.";
             return null;
         }
 

@@ -1,6 +1,6 @@
 ﻿@page "/login"
 
-<h3>Login</h3>
+<h3>Log ind</h3>
 
 @if (!string.IsNullOrWhiteSpace(ErrorMessage))
 {
@@ -11,17 +11,17 @@
 
 <form method="post" action="/web-auth/login">
     <div class="mb-3">
-        <label>Username</label>
+        <label>Brugernavn</label>
         <input class="form-control" name="Username" />
     </div>
 
     <div class="mb-3">
-        <label>Password</label>
+        <label>Adgangskode</label>
         <input class="form-control" type="password" name="Password" />
     </div>
 
     <button class="btn btn-primary" type="submit">
-        Login
+        Log ind
     </button>
 </form>
 
@@ -32,8 +32,8 @@
     private string? ErrorMessage =>
         Error switch
         {
-            "1" => "Forkert brugernavn eller password.",
-            "rate-limit" => "For mange loginforsøg. Vent et øjeblik og prøv igen.",
+            "1" => "Forkert brugernavn eller adgangskode.",
+            "rate-limit" => "For mange log ind-forsøg. Vent et øjeblik og prøv igen.",
             _ => null
         };
 }
