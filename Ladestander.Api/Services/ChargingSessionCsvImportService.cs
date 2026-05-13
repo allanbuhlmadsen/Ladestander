@@ -154,7 +154,7 @@ public class ChargingSessionCsvImportService : IChargingSessionCsvImportService
                 ChargerAlias = row.ChargerAlias,
                 StartTime = row.StartTime,
                 EnergyKWh = row.EnergyKWh,
-                SourceUserName = row.UserName
+                SourceUserName = customer.FullName
             };
 
             await _chargingSessionRepository.AddAsync(chargingSession);

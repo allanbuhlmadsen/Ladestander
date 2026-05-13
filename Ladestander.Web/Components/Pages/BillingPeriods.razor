@@ -154,10 +154,10 @@ else
                     <td>@period.Name</td>
                     <td>@period.MonthName (@period.MonthNumber)</td>
                     <td>@period.Year</td>
-                    <td>@period.AveragePriceKWh</td>
-                    <td>@period.AverageSolarPriceKWh</td>
-                    <td>@period.IsElectricityBillUpdated</td>
-                    <td>@period.IsClosed</td>
+                    <td>@period.AveragePriceKWh.ToString("0.00") kr.</td>
+                    <td>@period.AverageSolarPriceKWh.ToString("0.00") kr.</td>
+                    <td>@(period.IsElectricityBillUpdated ? "Ja" : "Nej")</td>
+                    <td>@(period.IsClosed ? "Ja" : "Nej")</td>
                     <td>
                         @if (!period.IsClosed)
                         {

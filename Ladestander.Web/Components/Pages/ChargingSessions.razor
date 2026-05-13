@@ -190,11 +190,11 @@ else
             {
                 <tr>
                     <td>@session.ChargingSessionId</td>
-                    <td>@session.CustomerId</td>
-                    <td>@session.BillingPeriodId</td>
-                    <td>@session.InvoiceId</td>
+                    <td>@GetCustomerName(session.CustomerId)</td>
+                    <td>@GetBillingPeriodName(session.BillingPeriodId)</td>
+                    <td>@GetInvoiceDisplay(session.InvoiceId)</td>
                     <td>@session.ChargerAlias</td>
-                    <td>@session.StartTime</td>
+                    <td>@session.StartTime?.ToString("dd-MM-yyyy HH:mm")</td>
                     <td>@session.EnergyKWh</td>
                     <td>@session.SourceUserName</td>
                 </tr>
@@ -473,5 +473,31 @@ else
             new AuthenticationHeaderValue("Bearer", token);
 
         return client;
+    }
+
+    private string GetCustomerName(int customerId)
+    {
+        return _customers?
+            .FirstOrDefault(customer => customer.CustomerId == customerId)?
+            .FullName
+            ?? $"Kunde #{customerId}";
+    }
+
+    private string GetBillingPeriodName(int billingPeriodId)
+    {
+        return _billingPeriods?
+            .FirstOrDefault(period => period.BillingPeriodId == billingPeriodId)?
+            .Name
+            ?? $"Periode #{billingPeriodId}";
+    }
+
+    private string GetInvoiceDisplay(int? invoiceId)
+    {
+        if (invoiceId is null)
+        {
+            return "-";
+        }
+
+        return $"Faktura #{invoiceId}";
     }
 }

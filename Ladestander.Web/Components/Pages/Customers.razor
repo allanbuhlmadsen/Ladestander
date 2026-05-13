@@ -139,7 +139,7 @@ else
                     <td>@customer.CustomerId</td>
                     <td>@customer.FullName</td>
                     <td>@customer.Email</td>
-                    <td>@customer.IsActive</td>
+                    <td>@(customer.IsActive ? "Ja" : "Nej")</td>
                     <td>
                         <button class="btn btn-sm btn-secondary" @onclick="() => StartEdit(customer)">
                             Rediger

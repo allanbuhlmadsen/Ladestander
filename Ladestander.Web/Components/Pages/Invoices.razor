@@ -162,15 +162,23 @@ else
             @foreach (var invoice in _invoices)
             {
                 <tr>
-                    <td>@invoice.InvoiceId</td>
-                    <td>@invoice.CustomerId</td>
+                    <td>@GetCustomerName(invoice.CustomerId)</td>
+                    <td>@GetBillingPeriodName(invoice.BillingPeriodId)</td>
                     <td>@invoice.BillingPeriodId</td>
-                    <td>@invoice.Status</td>
-                    <td>@invoice.IsSent</td>
-                    <td>@invoice.IsPaid</td>
-                    <td>@invoice.TotalEnergyKWh</td>
-                    <td>@invoice.TotalAmount</td>
-                    <td>@invoice.CreatedAt</td>
+                    <td>
+                        @(invoice.Status switch
+                        {
+                            "Draft" => "Kladde",
+                            "Sent" => "Sendt",
+                            "Paid" => "Betalt",
+                            _ => invoice.Status
+                        })
+                    </td>
+                    <td>@(invoice.IsSent ? "Ja" : "Nej")</td>
+                    <td>@(invoice.IsPaid ? "Ja" : "Nej")</td>
+                    <td>@invoice.TotalEnergyKWh.ToString("0.###")</td>
+                    <td>@invoice.TotalAmount.ToString("0.00") kr.</td>
+                    <td>@invoice.CreatedAt?.ToString("dd-MM-yyyy HH:mm")</td>
                     <td>
                         <button class="btn btn-sm btn-secondary" @onclick='() => UpdateInvoiceStatusAsync(invoice.InvoiceId, "Sent")'>
                             Markér som sendt
@@ -422,5 +430,21 @@ else
             new AuthenticationHeaderValue("Bearer", token);
 
         return client;
+    }
+
+    private string GetCustomerName(int customerId)
+    {
+        return _customers?
+            .FirstOrDefault(customer => customer.CustomerId == customerId)?
+            .FullName
+            ?? $"Kunde #{customerId}";
+    }
+
+    private string GetBillingPeriodName(int billingPeriodId)
+    {
+        return _billingPeriods?
+            .FirstOrDefault(period => period.BillingPeriodId == billingPeriodId)?
+            .Name
+            ?? $"Periode #{billingPeriodId}";
     }
 }

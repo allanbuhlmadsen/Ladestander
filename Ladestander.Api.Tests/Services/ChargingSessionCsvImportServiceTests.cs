@@ -222,7 +222,8 @@ public class ChargingSessionCsvImportServiceTests
             {
                 CustomerId = 1,
                 FirstName = "Test",
-                LastName = "Kunde"
+                LastName = "Kunde",
+                FullName = "Test Kunde"
             });
 
         _chargingSessionRepositoryMock
