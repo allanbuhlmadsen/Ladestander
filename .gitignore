@@ -381,3 +381,24 @@ CoverageReport/
 
 # Logs
 *.log
+
+# Local app settings / secrets
+appsettings.Development.json
+
+# Local environment files
+.env
+.env.*
+
+# CSV exports / customer data
+*.csv
+
+# SQL backups
+*.bak
+
+# Test results
+TestResults/
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3

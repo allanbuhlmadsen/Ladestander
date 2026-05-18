@@ -1,4 +1,9 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitignore" />
+    <File Path="Ladestander.Api/appsettings.Development.json" />
+    <File Path="Ladestander.Web/appsettings.Development.json" />
+  </Folder>
   <Project Path="HashGenerator/HashGenerator.csproj" Id="58efc6ad-6e48-4c26-9358-0bd9f8a4f958" />
   <Project Path="Ladestander.Api.Tests/Ladestander.Api.Tests.csproj" Id="327d1e90-4361-43bd-a21c-7058e176485e" />
   <Project Path="Ladestander.Api/Ladestander.Api.csproj" />
