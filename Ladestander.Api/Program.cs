@@ -24,11 +24,10 @@ namespace Ladestander.Api
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
-
             builder.Services.AddControllers()
                 .ConfigureApiBehaviorOptions(options =>
                 {
+                    // Return a consistent API error response for DTO validation failures.
                     options.InvalidModelStateResponseFactory = context =>
                     {
                         var errors = context.ModelState
@@ -112,6 +111,7 @@ namespace Ladestander.Api
             builder.Services.AddScoped<ChargingSessionValidator>();
             builder.Services.AddScoped<InvoiceValidator>();
 
+            // Limit repeated login attempts to reduce brute-force risk.
             builder.Services.AddRateLimiter(options =>
             {
                 options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -130,7 +130,6 @@ namespace Ladestander.Api
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();

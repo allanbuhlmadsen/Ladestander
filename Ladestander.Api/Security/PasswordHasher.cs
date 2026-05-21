@@ -20,6 +20,8 @@ public class PasswordHasher : IPasswordHasher
             passwordHash,
             password);
 
+        // SuccessRehashNeeded is accepted because the password is valid,
+        // even if ASP.NET Core recommends rehashing with updated parameters.
         return result == PasswordVerificationResult.Success ||
                result == PasswordVerificationResult.SuccessRehashNeeded;
     }

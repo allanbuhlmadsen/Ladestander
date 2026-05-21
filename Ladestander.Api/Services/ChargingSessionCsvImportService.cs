@@ -46,6 +46,7 @@ public class ChargingSessionCsvImportService : IChargingSessionCsvImportService
             .Select(CleanCsvValue)
             .ToList();
 
+        // Use header-based mapping to support reordered ChargerSync CSV columns.
         var headerMap = headers
             .Select((header, index) => new { header, index })
             .ToDictionary(x => x.header, x => x.index);
@@ -133,6 +134,8 @@ public class ChargingSessionCsvImportService : IChargingSessionCsvImportService
                 continue;
             }
 
+            // Prevent duplicate charging session imports for the same customer,
+            // billing period, charger, and start time.
             var exists = await _chargingSessionRepository.ExistsAsync(
                 customer.CustomerId,
                 billingPeriodId,
@@ -146,6 +149,8 @@ public class ChargingSessionCsvImportService : IChargingSessionCsvImportService
                 continue;
             }
 
+            // The raw CSV username is used for customer matching,
+            // but the normalized customer name is stored for consistent long-term storage.
             var chargingSession = new ChargingSession
             {
                 CustomerId = customer.CustomerId,
@@ -162,6 +167,8 @@ public class ChargingSessionCsvImportService : IChargingSessionCsvImportService
             importedCount++;
         }
 
+        // Store import metadata and validation errors
+        // to support traceability and troubleshooting.
         var importLog = new ImportLog
         {
             BillingPeriodId = billingPeriodId,

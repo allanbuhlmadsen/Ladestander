@@ -114,6 +114,8 @@ namespace Ladestander.Api.Services
             var totalAmount = _invoiceCalculationService
                 .CalculateTotalAmount(totalEnergyKWh, billingPeriod.AveragePriceKWh);
 
+            // Store calculated totals on the invoice as a historical snapshot.
+            // This preserves invoice consistency even if billing prices or charging sessions change later.
             var invoice = new Invoice
             {
                 CustomerId = request.CustomerId,
@@ -129,6 +131,7 @@ namespace Ladestander.Api.Services
 
             var createdInvoice = await _invoiceRepository.AddAsync(invoice);
 
+            // Link the charging sessions to the generated invoice after the invoice has been persisted.
             foreach (var chargingSession in chargingSessions)
             {
                 chargingSession.InvoiceId = createdInvoice.InvoiceId;
@@ -169,6 +172,8 @@ namespace Ladestander.Api.Services
                 throw new InvalidOperationException("Invoice status must be Draft, Sent or Paid.");
             }
 
+            // Invoice status transitions are intentionally restricted.
+            // Paid invoices are final, and sent invoices cannot be moved back to Draft.
             if (invoice.IsPaid)
             {
                 throw new InvalidOperationException("Paid invoices cannot be changed.");

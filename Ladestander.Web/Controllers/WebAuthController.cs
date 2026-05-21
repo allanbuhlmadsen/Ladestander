@@ -48,6 +48,8 @@ public class WebAuthController : Controller
             return Redirect("/login?error=1");
         }
 
+        // Store the JWT server-side in the authentication principal.
+        // The browser only receives an HttpOnly cookie and never stores the JWT directly.
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.Name, loginResponse.Username),
