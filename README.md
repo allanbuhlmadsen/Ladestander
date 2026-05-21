@@ -78,6 +78,8 @@ The system is intentionally designed as a realistic MVP (Minimum Viable Product)
 
 ## Architecture
 
+![Ladestander architecture diagram](docs/images/architecture-diagram.png)
+
 The solution is structured as a layered ASP.NET Core application with clear separation of responsibilities between presentation, business logic, security, and data access.
 
 The backend follows a service/repository architecture focused on:

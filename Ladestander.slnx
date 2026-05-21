@@ -1,6 +1,11 @@
 <Solution>
+  <Folder Name="/docs/" />
+  <Folder Name="/docs/images/">
+    <File Path="docs/images/architecture-diagram.png.png" />
+  </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".gitignore" />
+    <File Path="docs/images/architecture-diagram.png.png" />
     <File Path="Ladestander.Api/appsettings.Development.json" />
     <File Path="Ladestander.Web/appsettings.Development.json" />
     <File Path="README.md" />
