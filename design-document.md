@@ -67,7 +67,7 @@ Systemet består overordnet af tre hoveddele:
 
 Arkitekturen er designet med tydelig adskillelse mellem præsentationslag, forretningslogik og persistenslag for at reducere koblingen mellem systemets komponenter og understøtte vedligeholdbarhed og testbarhed.
 
-![Ladestander architecture](images/architecture-diagram.png)
+![Ladestander architecture](./images/architecture-diagram.png)
 
 ## Overordnet arkitektur
 
@@ -232,7 +232,7 @@ Systemets centrale domæneobjekter består af:
 * fakturaer (`Invoice`)
 * administratorbrugere (`AdminUser`)
 
-![Ladestander database design](images/database-design.png)
+![Ladestander database design](./images/database-design.png)
 
 ## Kunder (Customer)
 
@@ -708,7 +708,7 @@ Sikkerhedsdesignet fokuserer særligt på:
 * beskyttelse af følsomme data
 * separation of concerns
 
-![Authentication flow](images/authentication-flow.png)
+![Authentication flow](./images/authentication-flow.png)
 
 ## Autentificering og autorisation
 
