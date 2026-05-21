@@ -481,6 +481,8 @@ This supports operational traceability and debugging of import operations.
 
 ## Authentication Flow
 
+![Ladestander authentication flow](docs/images/authentication-flow.png)
+
 The system uses a hybrid authentication architecture combining JWT authentication in the API with secure cookie-based authentication in the Blazor web application.
 
 ### Authentication Process
