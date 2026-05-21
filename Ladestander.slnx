@@ -1,5 +1,7 @@
 <Solution>
-  <Folder Name="/docs/" />
+  <Folder Name="/docs/">
+    <File Path="design-document.md" />
+  </Folder>
   <Folder Name="/docs/images/">
     <File Path="docs/images/architecture-diagram.png" />
     <File Path="docs/images/authentication-flow.png" />
