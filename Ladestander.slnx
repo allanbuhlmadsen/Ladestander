@@ -3,11 +3,13 @@
   <Folder Name="/docs/images/">
     <File Path="docs/images/architecture-diagram.png" />
     <File Path="docs/images/authentication-flow.png" />
+    <File Path="docs/images/database-design.png" />
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".gitignore" />
     <File Path="docs/images/architecture-diagram.png" />
     <File Path="docs/images/authentication-flow.png" />
+    <File Path="docs/images/database-design.png" />
     <File Path="Ladestander.Api/appsettings.Development.json" />
     <File Path="Ladestander.Web/appsettings.Development.json" />
     <File Path="README.md" />

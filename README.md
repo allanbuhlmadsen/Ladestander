@@ -425,6 +425,8 @@ Ladestander
 
 ## Database Design
 
+![Ladestander database design](docs/images/database-design.png)
+
 The database design was migrated from an existing Microsoft Access solution to Microsoft SQL Server in order to support a more maintainable, scalable, and testable architecture.
 
 The domain model is centered around the following core entities:
